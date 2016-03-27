@@ -4,5 +4,5 @@ touch README
 git init
 git add README
 git commit -m "first commit"
-git remote add origin git@github.com/wintel2014/LinuxProgram.git
+(Work with SSH) git remote add origin git@github.com:wintel2014/LinuxProgram.git
 git push -u origin master
