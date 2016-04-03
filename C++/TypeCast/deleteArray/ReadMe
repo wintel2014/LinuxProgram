@@ -1,0 +1,4 @@
+The array is allocated by "new" will use the "count" in header to indicate how much the array is.
+delete "array" will use "count" to call the constructors of all objects in the array. And each OBJECT's size is indicated by its TYPE.
+
+Try to delete the DERIVE array with BASE type will introduce core dump.
