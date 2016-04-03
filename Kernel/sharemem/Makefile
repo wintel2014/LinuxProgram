@@ -19,13 +19,16 @@ PWD       := $(shell pwd)
 modules:
 	#$(MAKE) -C $(KERNELDIR) M=$(PWD) LDDINC=$(PWD)/../include modules 
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules 
+	@echo "================================="
+	make -f MakeUtils
 
 endif
 
 
 
 clean:
-	rm -rf *.o *~ core .depend .*.cmd *.ko *.mod.c .tmp_versions
+	rm -rf *.o *~ core .depend .*.cmd *.ko *.mod.c .tmp_versions module* Module*
+	make -f MakeUtils clean
 
 depend .depend dep:
 	$(CC) $(CFLAGS) -M *.c > .depend
@@ -36,6 +39,7 @@ include .depend
 endif
 install:
 	sudo insmod sharemem.ko
+	sudo chmod a+rw /dev/sharemem
 	sudo dmesg -c
 uninstall:
 	sudo rmmod sharemem
