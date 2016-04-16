@@ -814,7 +814,7 @@ Disassembly of section .rodata:
   400a1a:	40 00 00             	add    %al,(%rax)
   400a1d:	00 00                	add    %al,(%rax)
   400a1f:	00 18                	add    %bl,(%rax)
-  400a21:	09 40 00             	or     %eax,0x0(%rax)
+  400a21:	09 40 00             	or     %eax,0x0(%rax) <=======0x400918 is defined where the "virtual show "
   400a24:	00 00                	add    %al,(%rax)
 	...
 
