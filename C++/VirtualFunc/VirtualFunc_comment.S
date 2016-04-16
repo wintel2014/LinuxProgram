@@ -699,10 +699,10 @@ class Base {
   4008f8:	55                   	push   %rbp
   4008f9:	48 89 e5             	mov    %rsp,%rbp
   4008fc:	48 89 7d f8          	mov    %rdi,-0x8(%rbp)
-  400900:	48 8b 45 f8          	mov    -0x8(%rbp),%rax
-  400904:	48 c7 00 20 0a 40 00 	movq   $0x400a20,(%rax)
-  40090b:	48 8b 45 f8          	mov    -0x8(%rbp),%rax
-  40090f:	c7 40 08 23 01 00 00 	movl   $0x123,0x8(%rax)
+  400900:	48 8b 45 f8          	mov    -0x8(%rbp),%rax    <===========this pointer
+  400904:	48 c7 00 20 0a 40 00 	movq   $0x400a20,(%rax)   <===========VTABLE is stored in object pointed by this
+  40090b:	48 8b 45 f8          	mov    -0x8(%rbp),%rax    <===========this pointer
+  40090f:	c7 40 08 23 01 00 00 	movl   $0x123,0x8(%rax)   <===========*(int*) ((char*)this[8])=0x123
   400916:	5d                   	pop    %rbp
   400917:	c3                   	retq   
 
