@@ -33,6 +33,7 @@ int main()
     // 1. Create the Base object with "operator new" and "placement new"
     void *pMem=operator new(sizeof(Base));
     ConstructBase(pMem, 111);
+    // The destructor have to be called manually!!!
     static_cast<Base*>(pMem)->~Base();
     operator delete(pMem);    
 
