@@ -20,9 +20,10 @@ class FileOps {
     public:
         FileOps(const char*, int Flags=O_RDONLY);
         virtual ~FileOps(){ if(mFd) { close(mFd); munmap(mBase, mSize);} }
-        int GetFd() const{ return mFd; }
-        inline void* GetBase();
-        inline size_t GetSize() {return mSize;}
+        inline int GetFd() const{ return mFd; }
+        inline void* GetBase() {return mBase; };
+        inline void* GetEnd() {return mEnd; };
+        inline size_t GetSize() {return mSize; }
     private:
         const char *mPathName;
         int mFlags;
@@ -31,8 +32,5 @@ class FileOps {
         int mFd;
         size_t mSize;
         void *mBase;
+        void *mEnd;
 };
-inline void* FileOps::GetBase()
-{
-    return mBase;
-}

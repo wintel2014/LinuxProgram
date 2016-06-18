@@ -11,6 +11,5 @@ main: $(OBJ)
 	g++ $(CFLAGS)  -c $< -o $@  
 run: main
 	./main
-tar
 clean:
 	rm  $(OBJ) main

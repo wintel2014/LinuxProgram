@@ -160,10 +160,10 @@ OrderAckMsgClass::OrderAckMsgClass(Header_t *p):
 void OrderAckMsgClass::PrintAckyMsg()
 {
     Header_t *pHeader = reinterpret_cast<Header_t*>(pAckMsg);
-    Log("%-10s==> Seq=0x%016llX,TimeStamp=0x%016llX EntryMsgEnd=%p OrderID=0x%08X, ClientID=0x%016llX\n",
+    Log("%-10s==> Seq=0x%016llX,TimeStamp=0x%016llX OrderID=0x%08X, ClientID=0x%016llX, AckMsgEnd=%p\n",
                 "AckMsg",
                 pHeader->Header_sequence_id,pHeader->Header_timestamp,
-                (char*)GetEnd()-(char*)g_pHeader, pAckMsg->order_id, pAckMsg->client_id);
+                pAckMsg->order_id, pAckMsg->client_id, (char*)GetEnd()-(char*)g_pHeader);
 }
 
 
@@ -186,8 +186,8 @@ OrderFillMsgClass::OrderFillMsgClass(Header_t *p):
 void OrderFillMsgClass::PrintFillyMsg()
 {
     Header_t *pHeader = static_cast<Header_t*>((void*) pFillMsg);
-    Log("%-10s==> Seq=0x%016llX,TimeStamp=0x%016llX EntryMsgEnd=%p\n",
-                "EntryMsg",
+    Log("%-10s==> Seq=0x%016llX,TimeStamp=0x%016llX FillMsgEnd=%p\n",
+                "FillMsg",
                 pHeader->Header_sequence_id,pHeader->Header_timestamp,
                 (char*)GetEnd()-(char*)g_pHeader);
 }
@@ -217,21 +217,30 @@ int main()
     vEntryMsg.reserve(ContainerSize);
     vAckMsg.reserve(ContainerSize);
     vFillMsg.reserve(ContainerSize);
-    switch(pHeader->Header_msg_type) {
-        case OrderEntryType:
-            vEntryMsg.push_back(make_shared<OrderEntryMsgClass>(pHeader));
-            break;
-        case OrderAckType:
-            vAckMsg.push_back(make_shared<OrderAckMsgClass>(pHeader));
-            break;
-        case OrderFillType:
-            vAckMsg.push_back(make_shared<OrderAckMsgClass>(pHeader));
-            break;
-        default:
-            LogE("Can't recognize the message type (%x)!!", pHeader->Header_msg_type);
-            return -1;
+    shared_ptr<OrderEntryMsgClass> spEntry;
+    shared_ptr<OrderAckMsgClass> spAck;
+    shared_ptr<OrderFillMsgClass> spFill;
+    while(pHeader < StreamMap.GetEnd()) {
+        switch(pHeader->Header_msg_type) {
+            case OrderEntryType:
+                spEntry = make_shared<OrderEntryMsgClass>(pHeader);
+                vEntryMsg.push_back(spEntry);
+                break;
+            case OrderAckType:
+                spAck = make_shared<OrderAckMsgClass>(pHeader);
+                vAckMsg.push_back(spAck);
+                break;
+            case OrderFillType:
+                spFill = make_shared<OrderFillMsgClass>(pHeader);
+                vFillMsg.push_back(spFill);
+                break;
+            default:
+                LogE("Can't recognize the message type (%x)!!", pHeader->Header_msg_type);
+                return -1;
+        }
+        pHeader = CalcAddr(pHeader).GetEnd();
     }
-    PrintHeader(pHeader);
+    // PrintHeader(pHeader);
     // Log("Header Packed Verify=%d\n",LayoutCheck());
     return 0;
 }

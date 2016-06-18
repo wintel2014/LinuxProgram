@@ -19,6 +19,7 @@ FileOps::FileOps(const char *path, int flags):
         close(mFd); 
         throw mBase;
     }
+    mEnd=reinterpret_cast<char*>(mBase)+mSize;
 
     Log("File is -%s-, fd is %d , mBase is %p, size is %d\n", mPathName, mFd, mBase, mSize);
 }
