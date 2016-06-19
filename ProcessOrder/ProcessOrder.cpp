@@ -387,13 +387,11 @@ int ProcessOrder::LinkFile()
     sort(LiquidityVector.begin(), LiquidityVector.end(), 
         [](const Liquidity &L, const Liquidity &R){return L.GFDQty > R.GFDQty;}); 
     
-    /*
-    ID2Entry_t::iterator mapIter=ClientID2OrderEntry.begin();
-    while( mapIter != ClientID2OrderEntry.end()) {
-        Log("%s-->ClientId=0x%016llX\n", mapIter->second->GetTraderTag(), mapIter->first);
-        mapIter++;
-    }
-    */
+#ifdef DEBUGV
+    for_each(ClientID2OrderEntry.begin(), ClientID2OrderEntry.end(), 
+            [](const ID2Entry_t::value_type &mapIter) {
+                    Log("%s-->ClientId=0x%016llX\n", mapIter.second->GetTraderTag(), mapIter.first);});
+#endif
     return 0;
 }
 
