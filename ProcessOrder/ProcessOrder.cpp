@@ -123,10 +123,14 @@ class OrderEntryMsgClass:public CalcAddr {
         inline explicit OrderEntryMsgClass(Header_t *p);
         inline void PrintEntryMsg();
         inline static size_t GetCount() {return count;}
+        inline uint32_t GetQty() {return pEntryMsg->qty;}
+        inline bool isGFD() {return pEntryMsg->time_in_force==GFD;}
         inline const char* GetTraderTag() {return TraderTag;}
         inline const char* GetInstrument() {return Instrument;}
-        OrderEntryMsg_t *pEntryMsg;
+        inline uint64_t GetClientID() {return pEntryMsg->client_id;}
+        // const bool operator ==(const OrderEntryMsgClass&);
     private:
+        OrderEntryMsg_t *pEntryMsg;
         char TraderTag[sizeof(OrderEntryMsg_t::trader_tag)+1];
         char Instrument[sizeof(OrderEntryMsg_t::instrument)+1];
         char Firm[257];
@@ -151,6 +155,10 @@ OrderEntryMsgClass::OrderEntryMsgClass(Header_t *p):
      
     PrintEntryMsg();
 }
+//const bool OrderEntryMsgClass::operator==(const OrderEntryMsgClass &EntryClass)
+//{
+//    return !strncmp(TraderTag, EntryClass.TraderTag, sizeof(TraderTag)-1);
+//}
 void OrderEntryMsgClass::PrintEntryMsg()
 {
     Header_t *pHeader = static_cast<Header_t*>((void*) pEntryMsg);
@@ -171,17 +179,11 @@ class  OrderAckMsgClass:public CalcAddr{
         inline void PrintAckyMsg();
         inline int Accept() {return (pAckMsg->order_status==GOOD);}
         inline uint32_t GetOrderID() {return pAckMsg->order_id;}
-        inline uint32_t GetClientID() {return pAckMsg->client_id;}
+        inline uint64_t GetClientID() {return pAckMsg->client_id;}
         inline static size_t GetCount() {return count;}
     private:
         OrderAckMsg_t *pAckMsg;
         static size_t count;
-        // AckMsg is used to communicated with Entry&Fill
-        // Entry contains ClientID
-        // Fill contains OrderID
-        // ACK contains both, but it seems ClientID==OrderID?
-        //shared_ptr<OrderEntryMsgClass> spEntry;
-        //shared_ptr<OrderFillMsgClass>  spFill;
 };
 size_t OrderAckMsgClass::count=0;
 OrderAckMsgClass::OrderAckMsgClass(Header_t *p):
@@ -271,10 +273,19 @@ void  PrintHeader(Header_t *pHeader)
             pHeader->Header_msg_len);      
 }
 
-typedef struct {
-    char* TraderName;
-    uint32_t GFDQty;
-}Liquidity_t;
+class Liquidity {
+    public:
+        Liquidity(){}
+        Liquidity(const char*Name, uint32_t qty=0):TraderName(Name),GFDQty(qty){}
+        const bool operator==(const Liquidity&);
+    
+        const char* TraderName;
+        uint32_t GFDQty;
+};
+const bool Liquidity::operator==(const Liquidity &Liquid)
+{
+    return !(strncmp(TraderName, Liquid.TraderName, 3));
+}
 typedef std::vector< shared_ptr<OrderEntryMsgClass> > VectorEntryMsg_t;
 typedef std::vector< shared_ptr<OrderAckMsgClass> >   VectorAckMSg_t;
 typedef std::vector< shared_ptr<OrderFillMsgClass> >  VectorFillMsg_t;
@@ -297,7 +308,7 @@ class ProcessOrder {
         VectorFillMsg_t vFillMsg;
         typedef std::map<uint64_t, shared_ptr<OrderEntryMsgClass> > ID2Entry_t;
         typedef std::map<string, uint64_t> TradesPerInstrument_t;
-        typedef std::vector<Liquidity_t> LiquidityVector_t;
+        typedef std::vector<Liquidity> LiquidityVector_t;
         ID2Entry_t ClientID2OrderEntry;
         LiquidityVector_t LiquidityVector;
         TradesPerInstrument_t TradesMap;
@@ -349,9 +360,10 @@ int ProcessOrder::LoadFile()
 int ProcessOrder::LinkFile()
 {
     VectorEntryMsg_t::iterator iter;
+    LiquidityVector_t::iterator IterLiquid;
     for (iter=vEntryMsg.begin(); iter!=vEntryMsg.end(); iter++) {
     #ifdef INTEGRITY_VERIFY
-        uint64_t ClientIDtmp=(*iter)->pEntryMsg->client_id;
+        uint64_t ClientIDtmp=(*iter)->GetClientID();
         ID2Entry_t::iterator iterCheck;
         iterCheck = ClientID2OrderEntry.find(ClientIDtmp);
         if(iterCheck != ClientID2OrderEntry.end()) {
@@ -359,9 +371,21 @@ int ProcessOrder::LinkFile()
             exit(-2);
         }
     #endif
-        ClientID2OrderEntry[(*iter)->pEntryMsg->client_id]=*iter;
-    }
+        if((*iter)->isGFD()) {
+            Liquidity Liquid((*iter)->GetTraderTag(), (*iter)->GetQty()); 
+            IterLiquid=find(LiquidityVector.begin(), LiquidityVector.end(), Liquid);
+            if(IterLiquid != LiquidityVector.end())
+                IterLiquid->GFDQty += Liquid.GFDQty;
+            else
+                LiquidityVector.push_back(Liquid);
+        }
+            
 
+        // MAP: CLIENTID--->OrderEntryMsg
+        ClientID2OrderEntry[(*iter)->GetClientID()]=*iter;
+    }
+    sort(LiquidityVector.begin(), LiquidityVector.end(), 
+        [](const Liquidity &L, const Liquidity &R){return L.GFDQty > R.GFDQty;}); 
     
     /*
     ID2Entry_t::iterator mapIter=ClientID2OrderEntry.begin();
@@ -396,11 +420,16 @@ int ProcessOrder::ShowResult()
     Log("TotalCnt=%u, EntryMsgCnt=%u, AckMsgCnt=%u, FillMsgCnt=%u ",
             TotalCnt, OrderEntryMsgClass::GetCount(),
             OrderAckMsgClass::GetCount(), OrderFillMsgClass::GetCount());
-    TradesPerInstrument_t::iterator TradesIter=TradesMap.begin();
-    while(TradesIter != TradesMap.end()) {
-        printf("%s:%lu, ",TradesIter->first.c_str(), TradesIter->second);
-        TradesIter++;
-    }
+
+    printf("Most Liquidity=%s ", LiquidityVector.begin()->TraderName);
+#ifdef DEBUG_V
+    for_each(LiquidityVector.begin(), LiquidityVector.end(), [](const Liquidity &l)
+                            {printf("%s-->%u\n", l.TraderName, l.GFDQty);});
+#endif
+    
+//Problem 5
+    for_each(TradesMap.begin(), TradesMap.end(), [](const TradesPerInstrument_t::value_type &Trades)
+                        {printf("%s:%lu, ",Trades.first.c_str(), Trades.second);});
     printf("\n");
     return 0;
 }
