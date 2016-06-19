@@ -4,7 +4,9 @@
 template <typename... TS>  
 void Log(const char* s, TS... args)  
 {
+#ifdef DEBUGV
     printf(s, args...);
+#endif
 }
 
 

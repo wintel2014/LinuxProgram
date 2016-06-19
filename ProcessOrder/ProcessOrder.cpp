@@ -5,6 +5,9 @@
 #include<FileOps.h>
 #include<memory>
 #include <assert.h>
+#include <map>
+#include <algorithm>
+#include <functional>
 using namespace std;
 
 // C++ class's memory model maybe corrupt the "mmap's" layout
@@ -120,8 +123,10 @@ class OrderEntryMsgClass:public CalcAddr {
         inline explicit OrderEntryMsgClass(Header_t *p);
         inline void PrintEntryMsg();
         inline static size_t GetCount() {return count;}
-    private:
+        inline const char* GetTraderTag() {return TraderTag;}
+        inline const char* GetInstrument() {return Instrument;}
         OrderEntryMsg_t *pEntryMsg;
+    private:
         char TraderTag[sizeof(OrderEntryMsg_t::trader_tag)+1];
         char Instrument[sizeof(OrderEntryMsg_t::instrument)+1];
         char Firm[257];
@@ -150,7 +155,7 @@ void OrderEntryMsgClass::PrintEntryMsg()
 {
     Header_t *pHeader = static_cast<Header_t*>((void*) pEntryMsg);
     Log("%-10s==> Seq=0x%016llX,TimeStamp=0x%016llX Price=%d, Qty=%d, "
-        "Instrument='%s' TraderTag='%s' Firm='%s' CleintID=0x%016llX  "
+        "Instrument='%s' TraderTag='%s' Firm='%s' ClientID=0x%016llX  "
         "TimeInForece=%s, Side=%s, EntryMsgEnd=%p\n",  "EntryMsg",
                 pHeader->Header_sequence_id,pHeader->Header_timestamp,
                 pEntryMsg->price, pEntryMsg->qty, Instrument, TraderTag, Firm,
@@ -159,12 +164,14 @@ void OrderEntryMsgClass::PrintEntryMsg()
 }
 
 
-class  OrderFillMsgClass;
+class  OrderFillMsgClass; //Forward declare
 class  OrderAckMsgClass:public CalcAddr{
     public:
         explicit OrderAckMsgClass(Header_t *p);
         inline void PrintAckyMsg();
         inline int Accept() {return (pAckMsg->order_status==GOOD);}
+        inline uint32_t GetOrderID() {return pAckMsg->order_id;}
+        inline uint32_t GetClientID() {return pAckMsg->client_id;}
         inline static size_t GetCount() {return count;}
     private:
         OrderAckMsg_t *pAckMsg;
@@ -173,8 +180,8 @@ class  OrderAckMsgClass:public CalcAddr{
         // Entry contains ClientID
         // Fill contains OrderID
         // ACK contains both, but it seems ClientID==OrderID?
-        shared_ptr<OrderEntryMsgClass> spEntry;
-        shared_ptr<OrderFillMsgClass>  spFill;
+        //shared_ptr<OrderEntryMsgClass> spEntry;
+        //shared_ptr<OrderFillMsgClass>  spFill;
 };
 size_t OrderAckMsgClass::count=0;
 OrderAckMsgClass::OrderAckMsgClass(Header_t *p):
@@ -201,6 +208,8 @@ class  OrderFillMsgClass:public CalcAddr{
         explicit OrderFillMsgClass(Header_t *p);
         inline void PrintFillyMsg();
         inline static size_t GetCount() {return count;}
+        inline uint32_t GetOrderID() {return pFillMsg->order_id;}
+        inline uint32_t GetFillQty() {return pFillMsg->fill_qty;}
     private:
         typedef struct _group{
             uint8_t firm_id;
@@ -262,10 +271,13 @@ void  PrintHeader(Header_t *pHeader)
             pHeader->Header_msg_len);      
 }
 
+typedef struct {
+    char* TraderName;
+    uint32_t GFDQty;
+}Liquidity_t;
 typedef std::vector< shared_ptr<OrderEntryMsgClass> > VectorEntryMsg_t;
 typedef std::vector< shared_ptr<OrderAckMsgClass> >   VectorAckMSg_t;
 typedef std::vector< shared_ptr<OrderFillMsgClass> >  VectorFillMsg_t;
-
 class ProcessOrder {
     public:
         ProcessOrder(const char *FileName);
@@ -273,15 +285,26 @@ class ProcessOrder {
         int LoadFile();
         int LinkFile();
         int ParseFile();
+        int ShowResult();
+        // order_id == clientid??? or get the relation with AckMsg
     private:
+        static size_t TotalCnt;    
+        uint64_t OrderID2ClientID(uint32_t order_id) {return order_id;}
         FileOps StreamMap; 
         Header_t *mFileBase;
-        std::vector< shared_ptr<OrderEntryMsgClass> > vEntryMsg;
-        std::vector< shared_ptr<OrderAckMsgClass> > vAckMsg;
-        std::vector< shared_ptr<OrderFillMsgClass> > vFillMsg;
+        VectorEntryMsg_t vEntryMsg;
+        VectorAckMSg_t vAckMsg;
+        VectorFillMsg_t vFillMsg;
+        typedef std::map<uint64_t, shared_ptr<OrderEntryMsgClass> > ID2Entry_t;
+        typedef std::map<string, uint64_t> TradesPerInstrument_t;
+        typedef std::vector<Liquidity_t> LiquidityVector_t;
+        ID2Entry_t ClientID2OrderEntry;
+        LiquidityVector_t LiquidityVector;
+        TradesPerInstrument_t TradesMap;
     
 };
 
+size_t ProcessOrder::TotalCnt=0;    
 ProcessOrder::ProcessOrder(const char* FileName):
         StreamMap("example_data_file.bin")
 {
@@ -295,7 +318,6 @@ int ProcessOrder::LoadFile()
     vFillMsg.reserve(ContainerSize);
 
     Header_t *pHeader=static_cast<Header_t*>(StreamMap.GetBase());
-    uint64_t TerminalStr=0x4244424442444244;
     while(pHeader < StreamMap.GetEnd()) {
         switch(pHeader->Header_msg_type) {
             case OrderEntryType:
@@ -312,57 +334,87 @@ int ProcessOrder::LoadFile()
                 return -1;
         }
         pHeader = CalcAddr(pHeader).GetEnd();
+#ifdef INTEGRITY_VERIFY
+        const uint64_t TerminalStr=0x4244424442444244;
         uint64_t *pTermStr=reinterpret_cast<uint64_t*>(reinterpret_cast<char*>(pHeader)-sizeof(uint64_t));
         if( *pTermStr != TerminalStr){
             LogE("Invalid TerminalString 0x%llx\n", *pTermStr);
             exit(-1);
         }
+#endif
+        TotalCnt++;
     }
-    Log("EntryMsgCnt=%u, AckMsgCnt=%u, FillMsgCnt=%u\n", OrderEntryMsgClass::GetCount(),
-            OrderAckMsgClass::GetCount(), OrderFillMsgClass::GetCount());
 }
 
-int main()
+int ProcessOrder::LinkFile()
 {
-/*
-    FileOps StreamMap("example_data_file.bin");
-    Header_t *pHeader=static_cast<Header_t*>(StreamMap.GetBase());
-    gMapBase=pHeader;
-    std::vector< shared_ptr<OrderEntryMsgClass> > vEntryMsg;
-    std::vector< shared_ptr<OrderAckMsgClass> > vAckMsg;
-    std::vector< shared_ptr<OrderFillMsgClass> > vFillMsg;
-
-    uint64_t TerminalStr=0x4244424442444244;
-    while(pHeader < StreamMap.GetEnd()) {
-        switch(pHeader->Header_msg_type) {
-            case OrderEntryType:
-                vEntryMsg.push_back(make_shared<OrderEntryMsgClass>(pHeader));
-                break;
-            case OrderAckType:
-                vAckMsg.push_back(make_shared<OrderAckMsgClass>(pHeader));
-                break;
-            case OrderFillType:
-                vFillMsg.push_back(make_shared<OrderFillMsgClass>(pHeader));
-                break;
-            default:
-                LogE("Can't recognize the message type (%x)!!", pHeader->Header_msg_type);
-                return -1;
+    VectorEntryMsg_t::iterator iter;
+    for (iter=vEntryMsg.begin(); iter!=vEntryMsg.end(); iter++) {
+    #ifdef INTEGRITY_VERIFY
+        uint64_t ClientIDtmp=(*iter)->pEntryMsg->client_id;
+        ID2Entry_t::iterator iterCheck;
+        iterCheck = ClientID2OrderEntry.find(ClientIDtmp);
+        if(iterCheck != ClientID2OrderEntry.end()) {
+            LogE("ClientID already Exist: 0x%16llX\n", ClientIDtmp);
+            exit(-2);
         }
-        pHeader = CalcAddr(pHeader).GetEnd();
-        uint64_t *pTermStr=reinterpret_cast<uint64_t*>(reinterpret_cast<char*>(pHeader)-sizeof(uint64_t));
-        if( *pTermStr != TerminalStr){
-            LogE("Invalid TerminalString 0x%llx\n", *pTermStr);
-            exit(-1);
-        }
+    #endif
+        ClientID2OrderEntry[(*iter)->pEntryMsg->client_id]=*iter;
     }
-    Log("EntryMsgCnt=%u, AckMsgCnt=%u, FillMsgCnt=%u\n", OrderEntryMsgClass::GetCount(),
-            OrderAckMsgClass::GetCount(), OrderFillMsgClass::GetCount());
-    // PrintHeader(pHeader);
-    // Log("Header Packed Verify=%d\n",LayoutCheck());
-*/
-    ProcessOrder Stream("example_data_file.bin");
-    gMapBase=Stream.GetBase();
-    Stream.LoadFile();
+
+    
+    /*
+    ID2Entry_t::iterator mapIter=ClientID2OrderEntry.begin();
+    while( mapIter != ClientID2OrderEntry.end()) {
+        Log("%s-->ClientId=0x%016llX\n", mapIter->second->GetTraderTag(), mapIter->first);
+        mapIter++;
+    }
+    */
     return 0;
 }
 
+int ProcessOrder::ParseFile()
+{
+    VectorFillMsg_t::iterator iter;
+    TradesPerInstrument_t::iterator TradesIter;
+    for(iter=vFillMsg.begin(); iter!=vFillMsg.end(); iter++){
+        shared_ptr<OrderEntryMsgClass> spEntry= ClientID2OrderEntry[OrderID2ClientID((*iter)->GetOrderID())];         
+        Log("Parse:TraderTag=%s ClientID=0x%016llX Instrument='%s' Qty=%lu\n",spEntry->GetTraderTag(), 
+            OrderID2ClientID((*iter)->GetOrderID()), spEntry->GetInstrument(), (*iter)->GetFillQty());
+
+        string Instrument(spEntry->GetInstrument());
+        TradesIter=TradesMap.find(Instrument);
+        if(TradesIter != TradesMap.end())
+            TradesMap[Instrument] += (*iter)->GetFillQty();
+        else 
+            TradesMap[Instrument]=(*iter)->GetFillQty();
+    }
+}
+
+int ProcessOrder::ShowResult()
+{
+    Log("TotalCnt=%u, EntryMsgCnt=%u, AckMsgCnt=%u, FillMsgCnt=%u ",
+            TotalCnt, OrderEntryMsgClass::GetCount(),
+            OrderAckMsgClass::GetCount(), OrderFillMsgClass::GetCount());
+    TradesPerInstrument_t::iterator TradesIter=TradesMap.begin();
+    while(TradesIter != TradesMap.end()) {
+        printf("%s:%lu, ",TradesIter->first.c_str(), TradesIter->second);
+        TradesIter++;
+    }
+    printf("\n");
+    return 0;
+}
+int main()
+{
+    ProcessOrder Stream("example_data_file.bin");
+    gMapBase=Stream.GetBase();
+    Stream.LoadFile();
+    Stream.LinkFile();
+    Stream.ParseFile();
+    Stream.ShowResult();
+#ifdef INTEGRITY_VERIFY
+    // PrintHeader(gMapBase);
+    // Log("Header Packed Verify=%d\n",LayoutCheck());
+#endif
+    return 0;
+}
