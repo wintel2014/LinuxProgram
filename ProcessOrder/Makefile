@@ -4,7 +4,7 @@ HEADER := $(wildcard *.h)
 HEADER += $(wildcard ./include/*.h)
 
 CFLAGS := -I./ -I./include -std=c++11
-CFLAGS += -DINTEGRITY_VERIFY -DDEBUGV
+#CFLAGS += -DINTEGRITY_VERIFY -DDEBUGV
 main: $(OBJ)
 	g++ $^ -o $@
 %.o:%.cpp  $(HEADER)

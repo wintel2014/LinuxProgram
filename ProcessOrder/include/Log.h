@@ -1,3 +1,5 @@
+#ifndef INCLUDE_LOG_HEADER
+#define INCLUDE_LOG_HEADER
 #include<iostream>
 #include<string>
 
@@ -15,3 +17,4 @@ void LogE(const char* s, TS... args)
 {
     fprintf(stderr, s, args...);
 }
+#endif
