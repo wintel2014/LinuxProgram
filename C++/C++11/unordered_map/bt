@@ -1,0 +1,57 @@
+
+
+
+p *(std::pair<int, Base>*)((std::__detail::_Hash_node<std::pair<int const, Base>, false>*)(_M_buckets[1]->_M_nxt))->_M_storage._M_storage.__data
+$66 = {
+  first = 1, 
+  second = {
+    mData = 1234
+  }
+}
+
+
+
+(gdb) whatis __n
+type = std::_Hashtable<int, std::pair<int const, Base>, std::allocator<std::pair<int const, Base> >, std::__detail::_Select1st, std::equal_to<int>, std::hash<int>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::__node_type *
+(gdb) whatis std::_Hashtable<int, std::pair<intBase:: const, Base>, std::allocator<std::pair<int const, Base> >, std::__detail::_Select1st, std::equal_to<int>, std::hash<int>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::__node_type
+type = std::__detail::_Hash_node<std::pair<int const, Base>, false>
+
+
+p *(std::pair<int, Base>*)__n->_M_storage._M_storage.__data
+$39 = {
+  first = 1, 
+  second = {
+    mData = 1234
+  }
+}
+
+
+#0  std::allocator_traits<std::allocator<std::pair<int const, Base> > >::construct<std::pair<int const, Base>, std::pair<int const, Base> const&> (__a=..., __p=0x619c48)
+    at /usr/include/c++/5/bits/alloc_traits.h:530
+#1  0x000000000040402b in std::__detail::_Hashtable_alloc<std::allocator<std::__detail::_Hash_node<std::pair<int const, Base>, false> > >::_M_allocate_node<std::pair<int const, Base> const&> (this=0x7fffffffdd90) at /usr/include/c++/5/bits/hashtable_policy.h:1955
+#2  0x0000000000403b45 in std::__detail::_AllocNode<std::allocator<std::__detail::_Hash_node<std::pair<int const, Base>, false> > >::operator()<std::pair<int const, Base> const&> (this=0x7fffffffdb90, __arg=...) at /usr/include/c++/5/bits/hashtable_policy.h:180
+#3  0x000000000040343a in std::_Hashtable<int, std::pair<int const, Base>, std::allocator<std::pair<int const, Base> >, std::__detail::_Select1st, std::equal_to<int>, std::hash<int>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::_M_insert<std::pair<int const, Base> const&, std::__detail::_AllocNode<std::allocator<std::__detail::_Hash_node<std::pair<int const, Base>, false> > > > (
+    this=0x7fffffffdd90, __v=..., __node_gen=...) at /usr/include/c++/5/bits/hashtable.h:1703
+#4  0x00000000004028c3 in std::__detail::_Insert_base<int, std::pair<int const, Base>, std::allocator<std::pair<int const, Base> >, std::__detail::_Select1st, std::equal_to<int>, std::hash<int>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::insert (this=0x7fffffffdd90, __v=...) at /usr/include/c++/5/bits/hashtable_policy.h:715
+#5  0x0000000000401ade in std::_Hashtable<int, std::pair<int const, Base>, std::allocator<std::pair<int const, Base> >, std::__detail::_Select1st, std::equal_to<int>, std::hash<int>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::_Hashtable<std::pair<int const, Base> const*> (this=0x7fffffffdd90, __f=0x7fffffffddd0, __l=0x7fffffffde00, __bucket_hint=0, __h1=..., __h2=..., __h=..., __eq=..., 
+    __exk=..., __a=...) at /usr/include/c++/5/bits/hashtable.h:840
+#6  0x00000000004015fa in std::_Hashtable<int, std::pair<int const, Base>, std::allocator<std::pair<int const, Base> >, std::__detail::_Select1st, std::equal_to<int>, std::hash<int>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::_Hashtable (this=0x7fffffffdd90, __l=..., __n=0, __hf=..., __eql=..., __a=...) at /usr/include/c++/5/bits/hashtable.h:446
+#7  0x00000000004012f2 in std::unordered_map<int, Base, std::hash<int>, std::equal_to<int>, std::allocator<std::pair<int const, Base> > >::unordered_map (
+    this=0x7fffffffdd90, __l=..., __n=0, __hf=..., __eql=..., __a=...) at /usr/include/c++/5/bits/unordered_map.h:222
+#8  0x0000000000400dab in main () at unordered_map.cpp:30
+
+
+
+
+#0  std::_Hashtable<int, std::pair<int const, Base>, std::allocator<std::pair<int const, Base> >, std::__detail::_Select1st, std::equal_to<int>, std::hash<int>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::_M_insert_bucket_begin (this=0x7fffffffdd90, __bkt=1, __node=0x619c40) at /usr/include/c++/5/bits/hashtable.h:1452
+#1  0x0000000000402138 in std::_Hashtable<int, std::pair<int const, Base>, std::allocator<std::pair<int const, Base> >, std::__detail::_Select1st, std::equal_to<int>, std::hash<int>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::_M_insert_unique_node (this=0x7fffffffdd90, __bkt=1, __code=1, __node=0x619c40) at /usr/include/c++/5/bits/hashtable.h:1607
+#2  0x000000000040345a in std::_Hashtable<int, std::pair<int const, Base>, std::allocator<std::pair<int const, Base> >, std::__detail::_Select1st, std::equal_to<int>, std::hash<int>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::_M_insert<std::pair<int const, Base> const&, std::__detail::_AllocNode<std::allocator<std::__detail::_Hash_node<std::pair<int const, Base>, false> > > > (
+    this=0x7fffffffdd90, __v=..., __node_gen=...) at /usr/include/c++/5/bits/hashtable.h:1704
+#3  0x00000000004028c3 in std::__detail::_Insert_base<int, std::pair<int const, Base>, std::allocator<std::pair<int const, Base> >, std::__detail::_Select1st, std::equal_to<int>, std::hash<int>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::insert (this=0x7fffffffdd90, __v=...) at /usr/include/c++/5/bits/hashtable_policy.h:715
+#4  0x0000000000401ade in std::_Hashtable<int, std::pair<int const, Base>, std::allocator<std::pair<int const, Base> >, std::__detail::_Select1st, std::equal_to<int>, std::hash<int>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::_Hashtable<std::pair<int const, Base> const*> (this=0x7fffffffdd90, __f=0x7fffffffddd0, __l=0x7fffffffde00, __bucket_hint=0, __h1=..., __h2=..., __h=..., __eq=..., 
+    __exk=..., __a=...) at /usr/include/c++/5/bits/hashtable.h:840
+#5  0x00000000004015fa in std::_Hashtable<int, std::pair<int const, Base>, std::allocator<std::pair<int const, Base> >, std::__detail::_Select1st, std::equal_to<int>, std::hash<int>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, true> >::_Hashtable (this=0x7fffffffdd90, __l=..., __n=0, __hf=..., __eql=..., __a=...) at /usr/include/c++/5/bits/hashtable.h:446
+#6  0x00000000004012f2 in std::unordered_map<int, Base, std::hash<int>, std::equal_to<int>, std::allocator<std::pair<int const, Base> > >::unordered_map (
+    this=0x7fffffffdd90, __l=..., __n=0, __hf=..., __eql=..., __a=...) at /usr/include/c++/5/bits/unordered_map.h:222
+#7  0x0000000000400dab in main () at unordered_map.cpp:30
+
