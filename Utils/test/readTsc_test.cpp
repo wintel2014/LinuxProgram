@@ -13,6 +13,11 @@ void Init<0,int>(int* ptr)
 {
     *ptr = 0;
 }
+template<>
+void Init<0,long>(long* ptr)
+{
+    *ptr = 0l;
+}
 
 template<size_t N, typename T>
 constexpr size_t SizeOfArray(T(&)[N])
@@ -33,6 +38,11 @@ int main(int argc, char* argv[])
 
     start = readTsc();
     volatile int a=0;
+    auto end = readTsc();
+    printf("%ld\n", end-start);
+
+    start = readTsc();
+    a=0;
     printf("%ld\n", readTsc()-start);
 
     start = readTsc();
@@ -40,10 +50,11 @@ int main(int argc, char* argv[])
         a = argc>>1;
     else
         a = argc<<1;
-    auto end = readTsc();
+    end = readTsc();
     printf("branch cost %ld\n", end-start);
 
-    int array[4096];
+    //int array[4096];
+    long array[4096];
 
     
     start = readTsc();
@@ -59,7 +70,7 @@ int main(int argc, char* argv[])
     printf("Init cost %ld\n", readTsc()-start);
 
     {
-        TSCCount t;
+        TSCCountVoid t;
         memset(array, 0, sizeof(array));
         printf("memset cost ");
     }
@@ -70,7 +81,7 @@ int main(int argc, char* argv[])
     printf("Init cost %ld\n", readTsc()-start);
 
     {
-        TSCCount t;
+        TSCCountVoid t;
         Init(array);
         printf("Init cost ");
     }

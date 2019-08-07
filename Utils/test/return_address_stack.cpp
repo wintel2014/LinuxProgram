@@ -11,13 +11,19 @@ void recursive_call(int n)
 }
 int main(int argc, char* argv[])
 {
-    recursive_call(18);
-    recursive_call(18);
-    recursive_call(18);
-    recursive_call(18);
+    constexpr int N = 14;
+
+    for(int i=0; i<10; i++)
     {
-        TSCCount t;
-        recursive_call(32);
-        printf("Init cost ");
+        recursive_call(N);
+        recursive_call(N);
+        recursive_call(N);
+        recursive_call(N);
     }
+    unsigned long ret;
+    {
+        TSCCount<unsigned long> t(ret);
+        recursive_call(N);
+    }
+    printf("recursive call cost %ld, %lf\n", ret, ret*1.0/N);
 }
