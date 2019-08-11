@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "../readTsc.hpp"
+#include "../affinity.hpp"
 #include <string.h>
 template<size_t N, typename T>
 void Init(T* ptr)
@@ -33,6 +34,7 @@ void Init(T(&array)[N])
 
 int main(int argc, char* argv[])
 {
+    SetAffinity<4>();   
     auto start = readTsc();
     printf("%ld\n", readTsc()-start);
 
