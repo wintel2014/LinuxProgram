@@ -14,6 +14,8 @@ if child doesn't touch the addr before father the pagefault will be trriggered a
 
 #define PAGE_SIZE (4096)
 #define M (1024*1024)
+
+#define CHILD_QUIT_AFTER_SECOND_PF
 int main()
 {
     #define size (1024l*M)
@@ -28,7 +30,9 @@ int main()
     pid_t pid = fork();
     if(pid==0)
     {
+    #ifdef CHILD_QUIT_AFTER_SECOND_PF
         sleep(20);
+    #endif
         exit(0);
     }
     else
@@ -37,7 +41,7 @@ int main()
         memset(args, '\0', sizeof(args));
         sprintf(args, "ps -o min_flt,maj_flt,rss,vsz %d", getpid());
         printf("run %s\n", args);
-        sleep(5);
+        sleep(8);
         printf("what's min_flt\n");
         for(long i=0; i<size; )
         {
@@ -49,6 +53,9 @@ int main()
     if(pid<0)
         printf("Failed to fork\n");
         
+    #ifndef CHILD_QUIT_AFTER_SECOND_PF
+    sleep(15);
+    #endif
         
     wait(NULL);
 }
