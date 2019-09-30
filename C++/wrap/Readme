@@ -1,0 +1,8 @@
+在使用GCC编译器时，如果不想工程使用系统的库函数，例如在自己的工程中可以根据选项来控制是否使用系统中提供的malloc/free, new/delete函数，可以有两种方法：
+
+(1). 使用LD_PRELOAD环境变量：可以设置共享库的路径，并且该库将在任何其它库之前加载，即这个动态库中符号优先级是最高的。
+
+(2). 使用GCC的--wrap选项：对symbol使用包装函数(wrapper function)，任何对symbol未定义的引用(undefined reference)会被解析成__wrap_symbol，而任何对__real_symbol未定义的引用会被解析成symbol。即当一个名为symbol符号使用wrap功能时，工程中任何用到symbol符号的地方实际使用的是__wrap_symbol符号，任何用到__real_symbol的地方实际使用的是真正的symbol。注意：当__wrap_symbol是使用C++实现时，一定要加上extern “C”，否则将会出现”undefined reference to __wrap_symbol”。
+————————————————
+版权声明：本文为CSDN博主「fengbingchun」的原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/fengbingchun/article/details/82947673
