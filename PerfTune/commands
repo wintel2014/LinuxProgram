@@ -1,0 +1,40 @@
+watch --interval=1 numactl --hardware
+
+//sched_setaffinity set_mempolicy
+numactl --physcpubind=0  --membind=0 ps -o command,pcpu
+
+taskset -c 0-1 -p pid
+
+#cls   CLS scheduling class of the process.  (alias policy, cls).  Field's possible values are:
+#
+#                   -   not reported
+#                   TS  SCHED_OTHER
+#                   FF  SCHED_FIFO
+#                   RR  SCHED_RR
+#                   B   SCHED_BATCH
+#                   ISO SCHED_ISO
+#                   IDL SCHED_IDLE
+#                   ?   unknown value
+#psr         PSR       processor that process is currently assigned to.
+ps -eo pid,tid,ppid,min_flt,maj_flt,rss,vsz,pcpu,cls,psr,eip,nice,pri,rtprio,command --sort min_flt
+
+
+/usr/sbin/irqbalance
+service irqbalance status
+service irqbalance stop
+watch interval=1 cat /proc/interrupts
+
+FIFO usage = sched_rt_runtime_us/sched_rt_period_us
+cat /proc/sys/kernel/sched_rt_period_us
+1000000
+echo 1000000 | sudo tee /proc/sys/kernel/sched_rt_runtime_us
+
+
+pidstat -w  -p pid monitor_duration profile_times
+
+pidstat -w  -p 3535 600 1
+Linux 4.15.0-1050-aws (ip-172-18-46-8)  09/27/19        _x86_64_        (2 CPU)
+03:57:49      UID       PID   cswch/s nvcswch/s  Command
+04:07:49        0      3535      0.00      0.00  greedy
+Average:        0      3535      0.00      0.00  greedy
+

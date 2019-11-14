@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
         printf("Error: pls input CoreNumber\n");
     SetAffinity(atoi(argv[1]));
     struct sched_param param;
-    param.sched_priority = sched_get_priority_max(SCHED_FIFO);
+    param.sched_priority = sched_get_priority_max(SCHED_FIFO); //same to watchdog/x
     if (sched_setscheduler(getpid(), SCHED_FIFO, &param)<0)
         perror("sched_setscheduler ");
     
