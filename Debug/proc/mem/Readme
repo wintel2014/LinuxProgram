@@ -1,0 +1,70 @@
+In the latest Kernel it's forbidden to read /dev/mem when CONFIG_STRICT_DEVMEM
+but we can add mem=4500M in grub, then the reserved buffer, [4500, end) can be accesst in /dev/mem
+sudo cat /proc/iomem | grep RAM
+
+
+drivers/char/mem.c
+104 static ssize_t read_mem(struct file *file, char __user *buf,
+105             size_t count, loff_t *ppos)
+106 {
+138         allowed = page_is_allowed(p >> PAGE_SHIFT);
+
+
+ 63 #ifdef CONFIG_STRICT_DEVMEM
+ 64 static inline int page_is_allowed(unsigned long pfn)
+ 65 {
+ 66     return devmem_is_allowed(pfn);
+ 67 }
+ 68 static inline int range_is_allowed(unsigned long pfn, unsigned long size)
+ 69 {
+ 70     u64 from = ((u64)pfn) << PAGE_SHIFT;
+ 71     u64 to = from + size;
+ 72     u64 cursor = from;
+ 73
+ 74     while (cursor < to) {
+ 75         if (!devmem_is_allowed(pfn))
+ 76             return 0;
+ 77         cursor += PAGE_SIZE;
+ 78         pfn++;
+ 79     }
+ 80     return 1;
+ 81 }
+ 82 #else
+
+arch/x86/mm/init.c
+689 int devmem_is_allowed(unsigned long pagenr)
+690 {
+691     if (page_is_ram(pagenr)) {
+692         /*
+693          * For disallowed memory regions in the low 1MB range,
+694          * request that the page be shown as all zeros.
+695          */
+696         if (pagenr < 256)
+697             return 2;
+698
+699         return 0;
+700     }
+701
+702     /*
+703      * This must follow RAM test, since System RAM is considered a
+704      * restricted resource under CONFIG_STRICT_IOMEM.
+705      */
+706     if (iomem_is_exclusive(pagenr << PAGE_SHIFT)) {
+707         /* Low 1MB bypasses iomem restrictions. */
+708         if (pagenr < 256)
+709             return 1;
+710
+711         return 0;
+712     }
+713
+714     return 1;
+715 }
+
+
+
+kernel/resource.c
+1568 int iomem_is_exclusive(u64 addr)
+1597         if (IS_ENABLED(CONFIG_IO_STRICT_DEVMEM)
+1598                 || p->flags & IORESOURCE_EXCLUSIVE) {
+
+
