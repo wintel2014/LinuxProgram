@@ -29,5 +29,5 @@ Core	CPU	Avg_MHz	Busy%	Bzy_MHz	TSC_MHz	IRQ	SMI	POLL	C1	C1E	C3	C6	C7s	C8	C9	C10	P
 
 sed -i '/GRUB_CMDLINE_LINUX/{s/"$//g;s/$/ intel_pstate=disable intel_idle.max_cstate=0 processor.max_cstate=1 idle=poll"/}' /etc/default/grub
 sudo update-grub
-#GRUB_CMDLINE_LINUX="intel_pstate=disable intel_idle.max_cstate=0 processor.max_cstate=1 idle=poll isolcpus=4,5 nmi_watchdog=0 rcu_nocbs=1 nohz_full=1"
-
+#GRUB_CMDLINE_LINUX="intel_pstate=disable intel_idle.max_cstate=0 processor.max_cstate=1 idle=poll isolcpus=4,5 nmi_watchdog=0 rcu_nocbs=1 nohz_full=1 nopat mem=4500M spectre_v2=off nopti"
+#https://access.redhat.com/articles/3311301 Controlling the Performance Impact of Microcode and Security Patches
