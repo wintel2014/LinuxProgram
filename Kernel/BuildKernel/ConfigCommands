@@ -1,0 +1,1 @@
+cat /boot/config-`uname -r`
