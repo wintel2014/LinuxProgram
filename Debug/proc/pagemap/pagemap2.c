@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/types.h> 
+#include <unistd.h>
 #define PAGE_SIZE 0x1000
 
 #define FIND_LIB_NAME
@@ -13,7 +14,7 @@
 static void print_page(uint64_t address, uint64_t data,
     const char *lib_name) {
 
-    printf("0x%-16lx : pfn %-16lx soft-dirty %ld file/shared %ld "
+    printf("0x%-16lx : pfn %-16ld soft-dirty %ld file/shared %ld "
         "swapped %ld present %ld library %s\n",
         address,
         data & 0x7fffffffffffff,
@@ -134,9 +135,18 @@ void process_pid(pid_t pid) {
 }
 
 int main(int argc, char *argv[]) {
-    if(argc < 2) {
-        printf("Usage: %s pid1 [pid2...]\n", argv[0]);
-        return 1;
+    //if(argc < 2) {
+    //    printf("Usage: %s pid1 [pid2...]\n", argv[0]);
+    //    return 1;
+    //}
+    if(argc == 1)
+    {
+        printf("=== Maps for pid %d\n", getpid());
+        process_pid(getpid());
+        volatile long array[]={0x123456780, 0x98654321};
+        printf("array %p\n", array);
+        while(1)
+            sleep(100);
     }
 
     for(int i = 1; i < argc; i ++) {

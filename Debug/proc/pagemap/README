@@ -1,3 +1,23 @@
+https://www.kernel.org/doc/Documentation/vm/pagemap.txt
+ * /proc/pid/pagemap.  This file lets a userspace process find out which physical frame each virtual page is mapped to.  It contains one 64-bit
+   value for each virtual page, containing the following data (from fs/proc/task_mmu.c, above pagemap_read):
+
+    * Bits 0-54  page frame number (PFN) if present
+    * Bits 0-4   swap type if swapped
+    * Bits 5-54  swap offset if swapped
+    * Bit  55    pte is soft-dirty (see Documentation/vm/soft-dirty.txt)
+    * Bit  56    page exclusively mapped (since 4.2)
+    * Bits 57-60 zero
+    * Bit  61    page is file-page or shared-anon (since 3.5)
+    * Bit  62    page swapped
+    * Bit  63    page present
+
+   Since Linux 4.0 only users with the CAP_SYS_ADMIN capability can get PFNs.
+   In 4.0 and 4.1 opens by unprivileged fail with -EPERM.  
+   Starting from 4.2 the PFN field is zeroed if the user does not have CAP_SYS_ADMIN. Reason: information about PFNs helps in exploiting Rowhammer vulnerability.
+
+
+
 Userspace tool to map virtual page addresses to physical addresses. Based
 on the /proc/pid/pagemap interface, described in kernel docs (pagemap.txt):
 https://www.kernel.org/doc/Documentation/vm/pagemap.txt
