@@ -7,12 +7,16 @@
 #include <errno.h>
 #include <sys/types.h> 
 #include <unistd.h>
+#include <map>
 #define PAGE_SIZE 0x1000
+#define PAGE_MASK (~(PAGE_SIZE-1))
+#define OFF_MASK (PAGE_SIZE-1)
 
 #define FIND_LIB_NAME
+std::map<uint64_t, uint64_t> virtual_to_pfn;
 
-static void print_page(uint64_t address, uint64_t data,
-    const char *lib_name) {
+static void print_page(uint64_t address, uint64_t data, const char *lib_name)
+{
 
     printf("0x%-16lx : pfn %-16ld soft-dirty %ld file/shared %ld "
         "swapped %ld present %ld library %s\n",
@@ -23,6 +27,7 @@ static void print_page(uint64_t address, uint64_t data,
         (data >> 62) & 1,
         (data >> 63) & 1,
         lib_name);
+    virtual_to_pfn[address] = data & 0x7fffffffffffff;
 }
 
 void handle_virtual_range(int pagemap, uint64_t start_address,
@@ -135,25 +140,32 @@ void process_pid(pid_t pid) {
 }
 
 int main(int argc, char *argv[]) {
-    //if(argc < 2) {
-    //    printf("Usage: %s pid1 [pid2...]\n", argv[0]);
-    //    return 1;
-    //}
     if(argc == 1)
     {
         printf("=== Maps for pid %d\n", getpid());
         process_pid(getpid());
         volatile long array[]={0x123456780, 0x98654321};
-        printf("array %p\n", array);
+        printf("array virtual=%p, pfn=%lu offset=%ld\n", array, virtual_to_pfn[reinterpret_cast<uint64_t>(array)&PAGE_MASK],
+                                                        reinterpret_cast<uint64_t>(array)&OFF_MASK);
+       
+        // wait to check the variable is modified through /dev/mem
         while(1)
-            sleep(100);
+        {
+            sleep(3);
+            printf("array[0] %ld 0x%lx\n", array[0], array[0]);
+            printf("array[1] %ld 0x%lx\n\n", array[1], array[1]);
+        }
     }
 
-    for(int i = 1; i < argc; i ++) {
-        pid_t pid = (pid_t)strtoul(argv[i], NULL, 0);
+    if(argc > 1)
+    {
+        printf("Usage: %s pid1 [pid2...]\n", argv[0]);
+        for(int i = 1; i < argc; i ++) {
+            pid_t pid = (pid_t)strtoul(argv[i], NULL, 0);
 
-        printf("=== Maps for pid %d\n", (int)pid);
-        process_pid(pid);
+            printf("=== Maps for pid %d\n", (int)pid);
+            process_pid(pid);
+        }
     }
 
     return 0;

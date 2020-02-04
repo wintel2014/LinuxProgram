@@ -9,7 +9,7 @@ all: pagemap pagemap2
 pagemap: pagemap.c
 	$(CC) $(CFLAGS) $^ -o $@
 pagemap2: pagemap2.c
-	$(CC) $(CFLAGS) $^ -o $@
+	g++ $^ -o $@
 
 .PHONY: clean
 clean:
