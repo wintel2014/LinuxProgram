@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
     {
         printf("=== Maps for pid %d\n", getpid());
         process_pid(getpid());
-        volatile long array[]={0x123456780, 0x98654321};
+        volatile unsigned int array[]={0x12345678, 0x87654321};
         printf("array virtual=%p, pfn=%lu offset=%ld\n", array, virtual_to_pfn[reinterpret_cast<uint64_t>(array)&PAGE_MASK],
                                                         reinterpret_cast<uint64_t>(array)&OFF_MASK);
        
@@ -152,8 +152,8 @@ int main(int argc, char *argv[]) {
         while(1)
         {
             sleep(3);
-            printf("array[0] %ld 0x%lx\n", array[0], array[0]);
-            printf("array[1] %ld 0x%lx\n\n", array[1], array[1]);
+            printf("array[0] %d 0x%x\n", array[0], array[0]);
+            printf("array[1] %u 0x%x\n\n", array[1], array[1]);
         }
     }
 
