@@ -10,10 +10,12 @@ int main(int argc, char* argv[])
     if (argc != 2)
         printf("Error: pls input CoreNumber\n");
     SetAffinity(atoi(argv[1]));
+#ifdef FIFO_RT_TYPE
     struct sched_param param;
     param.sched_priority = sched_get_priority_max(SCHED_FIFO); //same to watchdog/x
     if (sched_setscheduler(getpid(), SCHED_FIFO, &param)<0)
         perror("sched_setscheduler ");
+#endif
     
     while(1);
 }
