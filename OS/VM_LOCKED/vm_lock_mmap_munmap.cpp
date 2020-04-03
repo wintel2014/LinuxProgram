@@ -28,7 +28,8 @@ std::atomic<int> endMap{0};
 constexpr long HZ=2500;
 constexpr size_t M = (1024*1024);
 constexpr size_t G = 1024*M;
-constexpr size_t len = G;
+constexpr size_t len1 = G;
+constexpr size_t len2 = G+512*M;
 
 #define VM_LOCKED
 void mmap_fun(int fd)
@@ -37,9 +38,9 @@ void mmap_fun(int fd)
 
     auto start = readTsc();
 #ifdef VM_LOCKED
-    void * addr = mmap(0, len, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_LOCKED, fd, 0);
+    void * addr = mmap(0, len1, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_LOCKED, fd, 0);
 #else
-    void * addr = mmap(0, len, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+    void * addr = mmap(0, len1, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
     //if(mlock(addr, len)<0)
     //{
     //    printf("Failed to mlock: %s\n", strerror(errno));
@@ -47,7 +48,7 @@ void mmap_fun(int fd)
     //}
 #endif
 
-    if(addr < 0)
+    if(addr == MAP_FAILED)
     {
         printf("Failed to mmap: %s\n",strerror(errno));
         return ;
@@ -58,8 +59,8 @@ void mmap_fun(int fd)
     endMap++;
 
     while(!startUNMap.load());
-    if( munmap(addr, len) != -1)
-        printf("thread-%ld: munmap duration=%ld us\n", gettid(), (readTsc()-end)/HZ);
+    if(( munmap(addr, len1) != -1) &&(mmap(0, len2, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_LOCKED, fd, 0)!=MAP_FAILED) )
+        printf("thread-%ld: munmap+mmap duration=%ld us\n", gettid(), (readTsc()-end)/HZ);
 
     while(1) sleep(1);
 }
@@ -75,7 +76,7 @@ int main()
         printf("Failed to open:%s\n", strerror(errno));
         return -1;
     }
-    ftruncate(fd, len);
+    ftruncate(fd, len2);
 
     std::vector<std::thread> Threads;
 
@@ -89,7 +90,7 @@ int main()
     startUNMap.store(true);
     
     usleep(50*1000);
-    constexpr size_t malloc_count = 20;
+    constexpr size_t malloc_count = 10;
     size_t gap[malloc_count];
     for(int i=0; i<sizeof(gap)/sizeof(size_t); i++)
     {

@@ -28,19 +28,21 @@ std::atomic<int> endMap{0};
 constexpr long HZ=2500;
 constexpr size_t M = (1024*1024);
 constexpr size_t G = 1024*M;
-constexpr size_t len = G;
+constexpr size_t len1 = G;
+constexpr size_t len2 = len1 + 512*M;
 
 #define VM_LOCKED
+
 void mmap_fun(int fd)
 {
     while(!startMap.load());
 
     auto start = readTsc();
 #ifdef VM_LOCKED
-    void * addr = mmap(0, len, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_LOCKED, fd, 0);
+    void * addr = mmap(0, len1, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_LOCKED, fd, 0);
 #else
-    void * addr = mmap(0, len, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    //if(mlock(addr, len)<0)
+    void * addr = mmap(0, len1, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+    //if(mlock(addr, len1)<0)
     //{
     //    printf("Failed to mlock: %s\n", strerror(errno));
     //    return ;
@@ -53,13 +55,19 @@ void mmap_fun(int fd)
         return ;
     }
     auto end = readTsc();
-    printf("thread-%ld: mmap   duration=%ld us\n", gettid(), (end-start)/HZ);
+    printf("thread-%ld: mmap@%p duration=%ld us\n", gettid(), addr, (end-start)/HZ);
 
     endMap++;
 
     while(!startUNMap.load());
-    if( munmap(addr, len) != -1)
-        printf("thread-%ld: munmap duration=%ld us\n", gettid(), (readTsc()-end)/HZ);
+    auto new_addr = mremap(addr, len1, len2, MREMAP_MAYMOVE);
+    if(new_addr != MAP_FAILED) 
+        printf("thread-%ld: mremap@%p duration=%ld us\n", gettid(), new_addr, (readTsc()-end)/HZ);
+    else
+    {
+        printf("Failed to mremap: %s\n", strerror(errno));
+        return;
+    }
 
     while(1) sleep(1);
 }
@@ -75,7 +83,7 @@ int main()
         printf("Failed to open:%s\n", strerror(errno));
         return -1;
     }
-    ftruncate(fd, len);
+    ftruncate(fd, len2);
 
     std::vector<std::thread> Threads;
 
@@ -88,9 +96,8 @@ int main()
 
     startUNMap.store(true);
     
-    usleep(50*1000);
-    constexpr size_t malloc_count = 20;
-    size_t gap[malloc_count];
+    usleep(1*1000);
+    size_t gap[10];
     for(int i=0; i<sizeof(gap)/sizeof(size_t); i++)
     {
         auto start = readTsc();
