@@ -109027,7 +109027,21 @@ struct reverse_copy_if_impl
 
 }
 
- template< typename P1 = na , typename P2 = na , typename P3 = na > struct copy_if : aux::copy_if_impl< P1 , P2 , P3> { }; template< typename P1 , typename P2 > struct copy_if< P1 , P2,na > : if_< has_push_back< typename clear<P1>::type> , aux::copy_if_impl< P1 , P2 , back_inserter< typename clear<P1>::type > > , aux::reverse_copy_if_impl< P1 , P2 , front_inserter< typename clear<P1>::type > > >::type { }; template< typename P1 = na , typename P2 = na , typename P3 = na > struct reverse_copy_if : aux::reverse_copy_if_impl< P1 , P2 , P3> { }; template< typename P1 , typename P2 > struct reverse_copy_if< P1 , P2,na > : if_< has_push_back<P1> , aux::reverse_copy_if_impl< P1 , P2 , back_inserter< typename clear<P1>::type > > , aux::copy_if_impl< P1 , P2 , front_inserter< typename clear<P1>::type > > >::type { }; template<> struct copy_if< na , na , na > { template< typename T1 , typename T2 , typename T3 , typename T4 =na , typename T5 =na > struct apply : copy_if< T1 , T2 , T3 > { }; }; template< typename Tag > struct lambda< copy_if< na , na , na > , Tag , int_<-1> > { typedef false_ is_le; typedef copy_if< na , na , na > result_; typedef copy_if< na , na , na > type; }; namespace aux { template< typename T1 , typename T2 , typename T3 > struct template_arity< copy_if< T1 , T2 , T3 > > : int_<3> { }; template<> struct template_arity< copy_if< na , na , na > > : int_<-1> { }; } template<> struct reverse_copy_if< na , na , na > { template< typename T1 , typename T2 , typename T3 , typename T4 =na , typename T5 =na > struct apply : reverse_copy_if< T1 , T2 , T3 > { }; }; template< typename Tag > struct lambda< reverse_copy_if< na , na , na > , Tag , int_<-1> > { typedef false_ is_le; typedef reverse_copy_if< na , na , na > result_; typedef reverse_copy_if< na , na , na > type; }; namespace aux { template< typename T1 , typename T2 , typename T3 > struct template_arity< reverse_copy_if< T1 , T2 , T3 > > : int_<3> { }; template<> struct template_arity< reverse_copy_if< na , na , na > > : int_<-1> { }; }
+template< typename P1 = na , typename P2 = na , typename P3 = na > 
+struct copy_if : aux::copy_if_impl< P1 , P2 , P3> { }; 
+
+template< typename P1 , typename P2 > 
+struct copy_if< P1 , P2,na > : 
+if_< has_push_back< typename clear<P1>::type> , aux::copy_if_impl< P1 , P2 , back_inserter< typename clear<P1>::type > > , aux::reverse_copy_if_impl< P1 , P2 , front_inserter< typename clear<P1>::type > > >::type { }; 
+
+template< typename P1 = na , typename P2 = na , typename P3 = na > struct reverse_copy_if : aux::reverse_copy_if_impl< P1 , P2 , P3> { }; 
+template< typename P1 , typename P2 > struct reverse_copy_if< P1 , P2,na > : if_< has_push_back<P1> , aux::reverse_copy_if_impl< P1 , P2 , back_inserter< typename clear<P1>::type > > , aux::copy_if_impl< P1 , P2 , front_inserter< typename clear<P1>::type > > >::type { }; 
+template<> struct copy_if< na , na , na > { template< typename T1 , typename T2 , typename T3 , typename T4 =na , typename T5 =na > struct apply : copy_if< T1 , T2 , T3 > { }; }; 
+template< typename Tag > struct lambda< copy_if< na , na , na > , Tag , int_<-1> > { typedef false_ is_le; typedef copy_if< na , na , na > result_; typedef copy_if< na , na , na > type; }; namespace aux { template< typename T1 , typename T2 , typename T3 > struct template_arity< copy_if< T1 , T2 , T3 > > : int_<3> { };template<> struct template_arity< copy_if< na , na , na > > : int_<-1> { }; } 
+template<> struct reverse_copy_if< na , na , na > { template< typename T1 , typename T2 , typename T3 , typename T4 =na , typename T5 =na > struct apply : reverse_copy_if< T1 , T2 , T3 > { }; }; 
+template< typename Tag > 
+struct lambda< reverse_copy_if< na , na , na > , Tag , int_<-1> > { typedef false_ is_le; typedef reverse_copy_if< na , na , na > result_; typedef reverse_copy_if< na , na , na > type; }; 
+namespace aux { template< typename T1 , typename T2 , typename T3 > struct template_arity< reverse_copy_if< T1 , T2 , T3 > > : int_<3> { }; template<> struct template_arity< reverse_copy_if< na , na , na > > : int_<-1> { }; }
 
 }}
 # 6 "ConfigFilter.cpp" 2
