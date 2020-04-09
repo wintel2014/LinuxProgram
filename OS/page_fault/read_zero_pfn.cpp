@@ -45,17 +45,45 @@ if (!(flags & FAULT_FLAG_WRITE)) {
 //    page = alloc_zeroed_user_highpage_movable(vma, address);
 //    if (!page)
 
+/*
+Verification: Rss/Pss ==> 4 kB even virtual size = 2.09GB
+cat /proc/self/smaps
+7fc4b3250000-7fc533251000 rw-p 00000000 00:00 0
+Size:            2097156 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Rss:                   4 kB
+Pss:                   4 kB
+*/
 void SumAllPage(size_t& ret, size_t* addr)
 {
     constexpr int pageSize = 4096;
     for(auto off=0; off<pageSize/sizeof(ret); off++)
         ret += addr[off];
 }
+void readFile(const char* FileName)
+{
+    char buf[4096];
+    auto fd = open(FileName, O_RDONLY);
+    if(fd<0)
+    {
+        printf("Failed to open %s\n", FileName);
+    }
+
+    printf("%s\n", FileName);
+    memset(buf, '\0', sizeof(buf));
+    read(fd, buf, sizeof(buf));
+    do {
+        printf("%s\n", buf);
+        memset(buf, '\0', sizeof(buf));
+    } while(read(fd, buf, sizeof(buf))==sizeof(buf));
+}
 
 constexpr size_t LEN = 2l*1024*1024*1024;
 int main()
 {
     char * addr = static_cast<char*> (malloc(LEN));
+    printf("pid=%d, address range [%p, %p)\n", getpid(), addr, addr+LEN);
 
     size_t data = 0;
     for(auto index=0; index<LEN; index+=4096)
@@ -68,19 +96,9 @@ int main()
 
     printf("All the data in %ld bytes, are sum as %ld\n",LEN, data);
 
-    auto fd = open("/proc/self/status", O_RDONLY);
-    if(fd<0)
-    {
-        printf("Failed to open /proc/self/status\n");
-        return -1;
-    }
-
-    
-    char buf[2048];
-    memset(buf, sizeof(buf), '\0');
-    read(fd, buf, sizeof(buf));
-    printf("%s\n", buf);
-    while(1)
+    readFile("/proc/self/smaps");
+    readFile("/proc/self/status");
+    while(0)
         usleep(100*1000);
     
 }
