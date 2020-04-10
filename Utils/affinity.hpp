@@ -1,10 +1,10 @@
+#include "sysconf.h"
 #include <sched.h>
 #include <unistd.h> /* sysconf */
 
 int SetAffinity(size_t CoreN)
 {
     cpu_set_t mask;
-    auto nrcpus = sysconf(_SC_NPROCESSORS_CONF);
     printf("%ld CPUs in system\n", nrcpus);
 
     CPU_ZERO(&mask);
@@ -21,7 +21,6 @@ template<size_t CoreN>
 int SetAffinity()
 {
     cpu_set_t mask;
-    auto nrcpus = sysconf(_SC_NPROCESSORS_CONF);
     printf("%ld CPUs in system\n", nrcpus);
 
     CPU_ZERO(&mask);
@@ -37,7 +36,6 @@ int SetAffinity()
 template<size_t CoreN>
 int SetAffinity(cpu_set_t& mask)
 {
-    auto nrcpus = sysconf(_SC_NPROCESSORS_CONF);
     printf("%ld CPUs in system\n", nrcpus);
     CPU_SET(CoreN, &mask); /* add CPU0 to cpu set */
     if (sched_setaffinity(0, sizeof(cpu_set_t), &mask) == -1) 
