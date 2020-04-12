@@ -1,5 +1,6 @@
 #include <type_traits>
 #include <stdio.h> //there are no arguments to ‘printf’ that depend on a template parameter, so a declaration of ‘printf’ must be available
+#include "cpu_info.hpp"
 inline unsigned long readTsc()
 {
     register unsigned long tsc __asm__("%rax");
