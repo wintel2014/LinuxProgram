@@ -1,0 +1,17 @@
+b Foo::Foo(long, char const*)
+b getStaticVar_2
+
+command 1
+	bt
+	c
+end
+command 2
+	set scheduler-lock on
+	disassemble
+	c
+	d 2
+	set scheduler-lock off
+end
+
+
+r
