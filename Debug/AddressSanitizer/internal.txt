@@ -1,0 +1,54 @@
+7fff7000-8fff7000 rw-p 00000000 00:00 0
+8fff7000-2008fff7000 ---p 00000000 00:00 0
+2008fff7000-10007fff8000 rw-p 00000000 00:00 0  //16TB=10007fff8000
+
+
+pGlobalAddr = 0x5555557550ef
+pShadowOfGlobalBase = 0x7fff8000
+
+pShadowOfGlobal = pShadowOfGlobalBase+(pGlobalAddr/8) = 0xaab2aae2a1d
+pShadowOfGlobal[0] ==7 : The leading 7 bytes are valid to access.  0: all 8 bytes can be accessed.
+but pGlobalAddr & 0x7= 0x5555557550ef&0x7 = 0x7, it means it tries to access the 8th byte, [0]~[7], so it's invalid access
+if[(pShadowOfGlobal[0] && pShadowOfGlobal[0]>=pGlobalAddr) ==0 ]					    
+	goto valid_access
+else
+	__asan_report_load1
+
+  0x0aab2aae2a00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0aab2aae2a10: 00 00 00 00 00 00 00 00 00 00 00 00 00[07]f9 f9
+  0x0aab2aae2a20: f9 f9 f9 f9 00 00 00 00 00 00 00 00 00 00 00 00
+
+Shadow   Applicateion Memory
+[00]	 |Y|Y|Y|Y|Y|Y|Y|Y|
+[07]	 |Y|Y|Y|Y|Y|Y|Y|N| <-0x5555557550ef
+[f9]	 |N|N|N|N|N|N|N|N|
+
+   0x00005555555549ea <+0>:     push   %rbp
+   0x00005555555549eb <+1>:     mov    %rsp,%rbp
+   0x00005555555549ee <+4>:     lea    0x2006fa(%rip),%rax        # 0x5555557550ef global variable's address
+   0x00005555555549f5 <+11>:    mov    %rax,%rdx
+   0x00005555555549f8 <+14>:    shr    $0x3,%rdx
+   0x00005555555549fc <+18>:    add    $0x7fff8000,%rdx   #pShadowOfGlobalBase=$0x7fff8000
+   0x0000555555554a03 <+25>:    movzbl (%rdx),%edx        #edx = (unsigned char*)(pShadowOfGlobal)[0]
+   0x0000555555554a06 <+28>:    test   %dl,%dl
+   0x0000555555554a08 <+30>:    setne  %cl                #if(edx[0]) cl=1
+=> 0x0000555555554a0b <+33>:    mov    %rax,%rsi
+   0x0000555555554a0e <+36>:    and    $0x7,%esi
+   0x0000555555554a11 <+39>:    cmp    %dl,%sil           #if (unsigned char*)(pShadowOfGlobal)[0] > (pGlobal&0x7)
+   0x0000555555554a14 <+42>:    setge  %dl                #  dl=1
+   0x0000555555554a17 <+45>:    and    %ecx,%edx          #if ((unsigned char*)(pShadowOfGlobal)[0]) && 
+														  #		((unsigned char*)(pShadowOfGlobal)[0] >= (pGlobal&0x7))
+   0x0000555555554a19 <+47>:    test   %dl,%dl            #    goto valid_logic
+   0x0000555555554a1b <+49>:    je     0x555555554a25 <main()+59>
+   0x0000555555554a1d <+51>:    mov    %rax,%rdi
+   0x0000555555554a20 <+54>:    callq  0x5555555548a0 <__asan_report_load1@plt>
+   0x0000555555554a25 <+59>:    movzbl 0x2006c3(%rip),%eax        # 0x5555557550ef
+   0x0000555555554a2c <+66>:    movsbl %al,%eax
+   0x0000555555554a2f <+69>:    mov    %eax,%esi
+   0x0000555555554a31 <+71>:    lea    0x108(%rip),%rdi        # 0x555555554b40
+   0x0000555555554a38 <+78>:    mov    $0x0,%eax
+   0x0000555555554a3d <+83>:    callq  0x555555554870 <printf@plt>
+   0x0000555555554a42 <+88>:    mov    $0x0,%eax
+   0x0000555555554a47 <+93>:    pop    %rbp
+   0x0000555555554a48 <+94>:    retq
+
