@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 {
     if(argc != 3)
     {
-        printf("Input HugePage number and cpu cycles\n");
+        printf("Input HugePage number and cpu frequency by MHz\n");
         return -1;
     }
 
@@ -74,5 +74,28 @@ int main(int argc, char* argv[])
     }
     duration = (readTsc() - start)/loop;
 
-    printf("%lu cycles [%lu us], bandwidth = %lu MB\n\n", duration, duration/MHZ, mapLen/(duration/MHZ));
+    printf("%lu cycles [%lu us], bandwidth = %lu MB\n", duration, duration/MHZ, mapLen/(duration/MHZ));
+
+    for(size_t off=0; off<mapLen; off+=sizeof(long))
+    {
+        auto value = random();
+        value = value<0 ? -value : value;
+        *reinterpret_cast<long int*>(addr+off) = (value%mapLen)/sizeof(long); 
+    }
+
+    long int* pLong = reinterpret_cast<long int*>(addr);
+    long ret = 0;
+    loop = 0;
+    start = readTsc();
+    while(loop++ < 3)
+    {
+        ret = 0;
+        for(size_t index=0; index<mapLen/sizeof(long); index++)
+        {
+            ret += pLong[pLong[index]];
+        }
+    }
+    duration = (readTsc() - start)/loop;
+
+    printf("Random access test: %lu cycles [%lu us]\n\n", duration, duration/MHZ);
 }

@@ -15,6 +15,7 @@ run:hugepage
 
 
 perf:perf.cpp
+	echo 256 | sudo tee  /proc/sys/vm/nr_hugepages
 	g++ $^ -o $@_NO_HUGEPAGE -DNO_HUGEPAGE
 	g++ $^ -o $@_HUGEPAGE
 	./$@_NO_HUGEPAGE ${HUGEPAGE_RESERVED_TOTOAL} ${CPU_MHZ}
