@@ -99,6 +99,8 @@ int main(int argc, char* argv[])
         if(iter > 1000000)
             isTHB = true;
     }
+//cat /proc/12034/smaps 
+//THPeligible:            1
     if (isTHB)
     {
         auto currentAddr = addr;
@@ -108,8 +110,8 @@ int main(int argc, char* argv[])
             //The previous page adjacent to the new page has been allocated as normal page, there is no way to combine them together as an HUGE Page
             //Only the address in the same 2M vma range can be tried with huge page when page fault.
             printf("%p:", currentAddr);
-#endif
             currentAddr += 4096;
+#endif
             sum += iter;
             std::cout<<iter<<" ";
         }

@@ -7,8 +7,8 @@ madvise : madvise.cpp
 	g++ $^  -std=c++11 -g3 -o $@_FREE
 
 GrabPage:GrabPage.cpp
-	g++ $< -o $@_NO_THP
-	g++ -DUSE_THP $< -o $@_THP
+	g++ $< -o $@_NO_THP -g3
+	g++ -DUSE_THP $< -o $@_THP -g3
 
 test:GrabPage
 	@echo 3 | sudo tee  /proc/sys/vm/drop_caches
