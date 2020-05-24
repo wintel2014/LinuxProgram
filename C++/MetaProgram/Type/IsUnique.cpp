@@ -3,28 +3,28 @@
 
 namespace check_first {
 template <typename... Args>
-struct is_unique_type
-{
-    constexpr static bool value = true;
-};
-
-template <typename A, typename B, typename... Args>
-struct is_unique_type<A, B, Args...>
-{
-    constexpr static bool value = (is_unique_type<A,B>::value && is_unique_type<A, Args...>::value);
-};
-
-template <typename A, typename B>
-struct is_unique_type<A,B>
-{
-    constexpr static bool value = true;
-};
-
-template <typename A>
-struct is_unique_type<A,A>
-{
-    constexpr static bool value = false;
-};
+    struct is_unique_type
+    {
+        constexpr static bool value = true;
+    };
+    
+    template <typename A, typename B, typename... Args>
+    struct is_unique_type<A, B, Args...>
+    {
+        constexpr static bool value = (is_unique_type<A,B>::value && is_unique_type<A, Args...>::value);
+    };
+    
+    template <typename A, typename B>
+    struct is_unique_type<A,B>
+    {
+        constexpr static bool value = true;
+    };
+    
+    template <typename A>
+    struct is_unique_type<A,A>
+    {
+        constexpr static bool value = false;
+    };
 }
 
 template <typename... Args>
