@@ -1,9 +1,9 @@
 #!/bin/bash
-for governer in $(ls /sys/devices/system/cpu/cpufreq/)
+for governor in $(ls /sys/devices/system/cpu/cpufreq/)
 do
-    if [[ $governer != 'boost' ]]
+    if [[ $governor != 'boost' ]]
     then
-        echo performance | sudo tee "/sys/devices/system/cpu/cpufreq/$governer/scaling_governor"
+        echo performance | sudo tee "/sys/devices/system/cpu/cpufreq/$governor/scaling_governor"
     fi
 done
 
