@@ -1,0 +1,61 @@
+1. vptr is set in constructor function.
+
+this--> |vptr    | -> virtual function ptr table
+        |        |
+ 		|		 |
+		|		 |
+    ::new(pf3) Foo<string>();
+    reinterpret_cast<Foo<string>*>(pf3)->vf1();
+
+
+//Consturctor  0x0000555555756cd0 is the address of vtable; 0x00005555555556fa is the function address
+Dump of assembler code for function Foo<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >::Foo():
+   0x0000555555555640 <+0>:     push   %rbp
+   0x0000555555555641 <+1>:     mov    %rsp,%rbp
+   0x0000555555555644 <+4>:     push   %rbx
+   0x0000555555555645 <+5>:     sub    $0x18,%rsp
+   0x0000555555555649 <+9>:     mov    %rdi,-0x18(%rbp)
+   0x000055555555564d <+13>:    lea    0x20167c(%rip),%rdx        # 0x555555756cd0 <_ZTV3FooINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEE+16>
+   0x0000555555555654 <+20>:    mov    -0x18(%rbp),%rax
+=> 0x0000555555555658 <+24>:    mov    %rdx,(%rax)
+
+(gdb) x/12gx this
+0x55555576a2e0: 0x0000555555756cd0      0x0000000000000000
+0x55555576a2f0: 0x0000000000000000      0x0000000000000000
+0x55555576a300: 0x0000000000000000      0x0000000000000000
+0x55555576a310: 0x0000000000000000      0x0000000000000041
+0x55555576a320: 0x0000000000000000      0x0000000000000000
+0x55555576a330: 0x0000000000000000      0x0000000000000000
+
+x/12gx 0x0000555555756cd0
+0x555555756cd0 <_ZTV3FooINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEE+16>:     0x00005555555556fa      0x000055555555571c
+0x555555756ce0 <_ZTV3FooINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEE+32>:     0x0000555555555af2      0x00007ffff7dc67f8
+0x555555756cf0 <_ZTI3FooIiE+8>:							 								0x0000555555555ec0      0x00007ffff7dc67f8
+0x555555756d00 <_ZTI3FooINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEE+8>:      0x0000555555555ee0      0x0000000000000001
+
+//Virtual function call
+   0x000055555555519b <+241>:   callq  0x555555555640 <Foo<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >::Foo()>
+   0x00005555555551a0 <+246>:   mov    -0x68(%rbp),%rax  //load this into rax
+   0x00005555555551a4 <+250>:   mov    (%rax),%rax       //load vptr into rax
+   0x00005555555551a7 <+253>:   mov    (%rax),%rax		 //load function addr into rax
+   0x00005555555551aa <+256>:   mov    -0x68(%rbp),%rdx
+=> 0x00005555555551ae <+260>:   mov    %rdx,%rdi
+   0x00005555555551b1 <+263>:   callq  *%rax
+(gdb) info registers $rdi
+rdi            0x55555576a2e0   93824994419424
+(gdb) info registers $rax
+rax            0x5555555556fa   93824992237306
+
+
+disassemble
+Dump of assembler code for function Foo<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >::vf1():
+=> 0x00005555555556fa <+0>:     push   %rbp
+   0x00005555555556fb <+1>:     mov    %rsp,%rbp
+   0x00005555555556fe <+4>:     sub    $0x10,%rsp
+   0x0000555555555702 <+8>:     mov    %rdi,-0x8(%rbp)
+   0x0000555555555706 <+12>:    lea    0x736(%rip),%rsi        # 0x555555555e43
+   0x000055555555570d <+19>:    lea    0x20190c(%rip),%rdi        # 0x555555757020 <_ZSt4cout@@GLIBCXX_3.4>
+   0x0000555555555714 <+26>:    callq  0x555555554eb0 <_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc@plt>
+   0x0000555555555719 <+31>:    nop
+   0x000055555555571a <+32>:    leaveq
+   0x000055555555571b <+33>:    retq

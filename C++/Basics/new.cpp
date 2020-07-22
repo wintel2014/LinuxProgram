@@ -16,6 +16,9 @@ class Foo
         static void operator delete(void* pdead,size_t size);
         static void* operator new[](size_t size);
         static void operator delete[](void* pdead,size_t size);
+        virtual void vf1() {cout<<"Foo1\n";}
+        virtual void vf2() {cout<<"Foo2\n";}
+        virtual void vf3() {cout<<"Foo3\n";}
     public:
         int mID;
         T mData;
@@ -84,6 +87,8 @@ int main()
 
     std::cout<<"\n==========================placement new==> ::new(ptr)==================================\n";
     ::new(pf3) Foo<string>();
+    reinterpret_cast<Foo<string>*>(pf3)->vf1();
+    reinterpret_cast<Foo<string>*>(pf3)->vf2();
 
     std::cout<<"\n==========================placement new==> new(ptr)==================================\n";
     new(pf3) Foo<string>();
