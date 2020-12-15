@@ -1,0 +1,4 @@
+cat /boot/config-$(uname -r) | grep CONFIG_X86_MSR
+if CONFIG_X86_MSR=m modprobe msr
+   CONFIG_X86_MSR=n compile it again
+
