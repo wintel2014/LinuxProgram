@@ -14,6 +14,7 @@
 	wrmsr -p $core 0x38f 0x00000007000000ff  //0xFF 8 general-purpose event counters; 0x7 Fixed-function enable
 */
 #include <stdio.h>
+#include "../../Utils/affinity.hpp"
 // rdpmc_instructions uses a "fixed-function" performance counter to return the count of retired instructions on
 //       the current core in the low-order 48 bits of an unsigned 64-bit integer.
 unsigned long rdpmc_instructions()
@@ -53,8 +54,23 @@ unsigned long rdpmc_reference_cycles()
    return ((unsigned long)a) | (((unsigned long)d) << 32);;
 }
 
+unsigned long rdpmc(int index)
+{
+   unsigned a, d, c;
+
+   c = index ;
+   __asm__ volatile("rdpmc" : "=a" (a), "=d" (d) : "c" (c));
+
+   return ((unsigned long)a) | (((unsigned long)d) << 32);;
+}
 int main()
 {
   auto start = rdpmc_instructions();
-  printf("%ld instructions retired\n", rdpmc_instructions()-start);
+  SetAffinity(1);
+  printf("%ld\n", rdpmc(0));
+  printf("%ld\n", rdpmc(1));
+  printf("%ld\n", rdpmc(2));
+  printf("%ld\n", rdpmc(3));
+  printf("%ld\n", rdpmc(4));
+  printf("%ld instructions retired, %ld cycles, %ld reference cycles\n", rdpmc_instructions(), rdpmc_actual_cycles(), rdpmc_reference_cycles());
 }
