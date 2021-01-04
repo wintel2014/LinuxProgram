@@ -9,9 +9,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <unistd.h>
 
 extern char __executable_start;
 extern char __etext;
+extern char __preinit_array_start;
 // PROVIDE(__text_start_debug = .);
 extern char __text_start_debug, __text_end_debug;
 char* text_start_addr = &__text_start_debug;
@@ -69,6 +71,8 @@ int main(void)
   printf("text_start=%p\n", &__text_start_debug);
   printf("text_end=%p\n", &__text_end_debug);
   printf("etext=%p\n", &__etext);
+  printf("__preinit_array_start=%p\n", &__preinit_array_start);
   printf("remap=%d\n", remap_ret);
+  while(1) usleep(1000*1000);
   return 0;
 }

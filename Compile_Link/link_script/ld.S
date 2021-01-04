@@ -54,7 +54,8 @@ SECTIONS
   .plt.got        : { *(.plt.got) }
   .plt.sec        : { *(.plt.sec) }
   .early_function : { *(.remap_text_section*)}
-  . = ALIGN(0x200000);
+  /*. = ALIGN(0x200000); --jiazi*/
+  . = ALIGN(CONSTANT(MAXPAGESIZE));
   PROVIDE(__text_start_debug = .);
   .text           :
   {
@@ -65,7 +66,8 @@ SECTIONS
     *(.text .stub .text.* .gnu.linkonce.t.*)
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
-    . = ALIGN(0x200000);
+    /*. = ALIGN(0x200000); --jiazi*/
+    . = ALIGN(CONSTANT(MAXPAGESIZE));
     PROVIDE(__text_end_debug = .);
   }
   .fini           :
