@@ -29,7 +29,7 @@ void __attribute__((noinline)) loop()
       }
     }
     auto duration = readTsc() - start;
-    printf("count1=%d, count2=%d, count3=%d %ld(avg=%ld)\n",count1, count2, count3, duration, duration/((long)count1*count2*count3));
+    printf("count1=%d, count2=%d, count3=%d %ld(avg=%lf)\n",count1, count2, count3, duration, duration/((double)count1*count2*count3));
 }
 void __attribute__((noinline)) loop1()
 {
@@ -80,8 +80,12 @@ int main(int argc, char* argv[])
 
             loop<10, 1000, 10000>();
             loop<10000, 1000, 10>();
-            loop<100, 1000, 10000>();
-            loop<10000, 1000, 100>();
+
+            loop<32, 1000, 10000>();
+            loop<10000, 1000, 32>();
+
+            loop<60, 1000, 10000>();
+            loop<10000, 1000, 60>();
         }
     }
 }
