@@ -76,6 +76,9 @@ MADV_NOHUGEPAGE (since Linux 2.6.38)
 #include <sys/wait.h>
 #include <signal.h>
 
+#include <fstream>
+#include <string>
+
 typedef void (*sa_sigaction_type)(int, siginfo_t *, void *);
 typedef const char* (*sig_code_reason_type)(int);
 const char* SIGBUS_reason(int si_code)
@@ -148,6 +151,65 @@ void setHandler(int signum, sa_sigaction_type handler)
 static size_t HUGE_PAGE_SIZE = 512l*PAGESIZE;
 #define msleep(count) usleep((count)*1000)
 
+#include <iostream>
+#include <array>
+#include <sstream>
+bool isHugePageMapped(void* start, void* end)
+{
+  std::string CurrentSmapsFile = "/proc/self/smaps";
+  std::ifstream smapsStream(CurrentSmapsFile);
+  if(!smapsStream.is_open())
+  {
+    printf("Failed to open %s\n", CurrentSmapsFile.c_str());
+    return false;
+  }
+  std::array<char, 32>  rangeL;
+  std::array<char, 32>  rangeR;
+  std::array<char, 2048> line; 
+  while (smapsStream.getline(&line[0], sizeof(line)) )
+  {
+    std::istringstream vmBuf(&line[0]);
+    vmBuf.getline(&rangeL[0], sizeof(rangeL), '-');
+    vmBuf.getline(&rangeR[0], sizeof(rangeR), ' ');
+    auto rangeLPtr = reinterpret_cast<void*>(std::stoull(&rangeL[0], 0, 16));
+    auto rangeRPtr = reinterpret_cast<void*>(std::stoull(&rangeR[0], 0, 16));
+    std::array<char, 128> FieldName; 
+    std::array<char, 128> Value; 
+    while(smapsStream.getline(&line[0], sizeof(line)))
+    {
+      long long AnonHugePagesSize = 0;
+      std::istringstream inbuf(&line[0]);
+      const std::string targetField("AnonHugePages");
+      const std::string endField("VmFlags");
+      inbuf.getline(&FieldName[0], sizeof(FieldName), ':');
+      {
+          if(targetField == &FieldName[0])
+          {
+              inbuf.getline(&Value[0], sizeof(Value), 'k');
+              auto AnonHugePagesSize = std::stoull(&Value[0], 0, 16);
+              if(rangeLPtr<=start && end<=rangeRPtr)
+              {
+                if(AnonHugePagesSize > 0)
+                  return true;
+              }
+          }
+          if(endField == &FieldName[0])
+          {
+              inbuf.getline(&Value[0], sizeof(Value));
+              if(rangeLPtr<=start && end<=rangeRPtr)
+              {
+                if(std::string(&Value[0]).find(" ht") != std::string::npos)  
+                  return true;
+                printf("%18p %18p  AnonHugePages %lld kB\n",rangeLPtr, rangeRPtr, AnonHugePagesSize);
+              }
+              break;
+          }
+      }
+    }
+  }
+  return false;
+}
+
 //#define USE_THP
 int main(int argc, char* argv[])
 {
@@ -191,6 +253,11 @@ int main(int argc, char* argv[])
         else
             printf("Child [%d]: touch %p\n", getpid(), addr+off);
         addr[off] = off; 
+
+        if (!isHugePageMapped(addr, addr+off))
+        {
+          printf("Failed to map [%p, %p] to hugepage\n", addr, addr+off);
+        }
         msleep(50);
     }
 
@@ -212,7 +279,7 @@ int main(int argc, char* argv[])
             printf("continued\n");
         }
     }
-
+#define DEBUG 
 #ifdef DEBUG
     while(1)
         msleep(500);
