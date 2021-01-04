@@ -4,6 +4,12 @@
 inline unsigned long readTsc()
 {
     register unsigned long tsc __asm__("%rax");
+    __asm__ volatile("rdtsc;\n shl $0x20, %%rdx;\n or %%rdx,%%rax": "=a"(tsc):: "%rcx", "%rdx");
+    return tsc;
+}
+inline unsigned long readTscp()
+{
+    register unsigned long tsc __asm__("%rax");
     __asm__ volatile("rdtscp;\n shl $0x20, %%rdx;\n or %%rdx,%%rax": "=a"(tsc):: "%rcx", "%rdx");
     return tsc;
 }

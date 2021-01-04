@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "../readTsc.hpp"
 #include "../affinity.hpp"
 #include <string.h>
@@ -32,20 +33,45 @@ void Init(T(&array)[N])
     Init<N, T>(static_cast<T*>(array));
 }
 
+template<size_t N>
+inline void READTSC()
+{
+  __asm__ volatile("rdtsc;");
+  if constexpr (N > 0)
+    READTSC<N-1>();
+  
+}
+void OverHead()
+{
+    constexpr size_t N=1050;
+    auto start = readTsc();
+    READTSC<N>();
+    printf("rdtsc overhead = %lf\n", (readTsc()-start)*1.0/N);
+}
+volatile int a;
 int main(int argc, char* argv[])
 {
-    SetAffinity<4>();   
-    auto start = readTsc();
-    printf("%ld\n", readTsc()-start);
+    OverHead();
 
-    start = readTsc();
-    volatile int a=0;
-    auto end = readTsc();
-    printf("%ld\n", end-start);
+    SetAffinity<1>();   
+    auto start = readTsc();
+    printf("dura readtsc=%ld cycle\n", readTsc()-start);
 
     start = readTsc();
     a=0;
-    printf("%ld\n", readTsc()-start);
+    auto end = readTsc();
+    printf("%ld\n", end-start);
+
+    constexpr long SIZE = 1024*1024*256l;
+    constexpr long STRIDE = 4*1024; 
+    volatile char* pSrc = (volatile char*)malloc(SIZE);
+    for(int i=0; i<SIZE; i++)
+      pSrc[i] = 0;
+
+    start = readTsc();
+    for(int i=0; i<SIZE; i+=STRIDE)
+      pSrc[i%(32*1024)] = 0;
+    printf("Per transction=%lf stride=%ld\n", (readTsc()-start)*1.0/(SIZE/STRIDE), STRIDE);
 
     start = readTsc();
     if(argc > 1)
