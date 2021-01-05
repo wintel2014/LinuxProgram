@@ -1,0 +1,52 @@
+mmap call procedure
+1. mmap is mapped @ 0x00007ffff755eaf0 
+2. 0x00007ffff755eaf0 is stored at 0xa01fd8
+3. function all is PC-relative address reference, it will fetch data from 0xa01fd8
+
+106   mmap_type mmap_addr =  reinterpret_cast<mmap_type>(reinterpret_cast<long*>(mmap));
+
+  [13] .plt.got          PROGBITS         0000000000401340  00001340
+       0000000000000020  0000000000000008  AX       0     0     8
+  [24] .got              PROGBITS         0000000000a01fb0  00401fb0
+       0000000000000050  0000000000000008  WA       0     0     8
+  [25] .got.plt          PROGBITS         0000000000a02000  00402000
+       0000000000000108  0000000000000008  WA       0     0     8
+
+
+=> 0x0000000000800348 <+270>:   mov    $0x1000,%esi
+   0x000000000080034d <+275>:   mov    $0x0,%edi
+   0x0000000000800352 <+280>:   callq  0x401358 <mmap@plt>
+
+Disassembly of section .plt.got:
+Dump of assembler code for function mmap@plt:
+=> 0x0000000000401358 <+0>:     jmpq   *0x600c7a(%rip)        # 0xa01fd8
+   0x000000000040135e <+6>:     xchg   %ax,%ax
+
+(gdb) disassemble
+Dump of assembler code for function __GI___mmap64:
+=> 0x00007ffff755eaf0 <+0>:     test   $0xfff,%r9d
+   0x00007ffff755eaf7 <+7>:     jne    0x7ffff755eb50 <__GI___mmap64+96>
+   0x00007ffff755eaf9 <+9>:     test   %rdi,%rdi
+   0x00007ffff755eafc <+12>:    push   %r15
+   0x00007ffff755eafe <+14>:    mov    %r8d,%r15d
+   0x00007ffff755eb01 <+17>:    push   %r14
+
+
+(gdb) p/x $rax
+$5 = 0x7ffff755eaf0
+
+(gdb) p mmap_addr
+$6 = (mmap_type) 0x7ffff755eaf0 <__GI___mmap64>
+
+(gdb) x/1gx 0xa01fd8
+0xa01fd8:       0x00007ffff755eaf0
+
+   0x00000000008003ca <+400>:   mov    0x201c07(%rip),%rax        # 0xa01fd8
+   0x00000000008003d1 <+407>:   mov    %rax,-0x10c0(%rbp)
+   0x00000000008003d8 <+414>:   mov    -0x10c0(%rbp),%rax
+=> 0x00000000008003df <+421>:   mov    %rax,%rdx
+   0x00000000008003e2 <+424>:   mov    0x201bef(%rip),%rax        # 0xa01fd8
+   0x00000000008003e9 <+431>:   mov    %rax,%rsi
+   0x00000000008003ec <+434>:   lea    0xaae(%rip),%rdi           # 0x800ea1
+   0x00000000008003f3 <+441>:   mov    $0x0,%eax
+   0x00000000008003f8 <+446>:   callq  0x401340 <printf@plt>
