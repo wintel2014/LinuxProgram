@@ -9,10 +9,19 @@
 #define gettid() syscall(__NR_gettid) 
 
 /*
-The Intel Instruction Set Reference for x86 and x64 mentions nothing about alignment requirements for the INC instruction. All it says in reference to LOCK is:
-This instruction can be used with a LOCK prefix to allow the instruction to be executed atomically.
-The LOCK prefix documentation states:
-The integrity of the LOCK prefix is not affected by the alignment of the memory field. Memory locking is observed for arbitrarily misaligned fields.
+https://software.intel.com/content/www/us/en/develop/documentation/vtune-help/top/reference/cpu-metrics-reference/split-stores.html
+
+Split Stores
+Metric Description
+Throughout the memory hierarchy, data moves at cache line granularity - 64 bytes per line. Although this is much larger than many common data types, such as integer, float, or double, unaligned values of these or other types may span two cache lines. Recent Intel architectures have significantly improved the performance of such 'split stores' by introducing split registers to handle these cases. But split stores can still be problematic, especially if they consume split registers which could be servicing other split loads.
+
+Possible Issues
+A significant portion of cycles is spent handling split stores.
+
+Tips
+Consider aligning your data to the 64-byte cache line granularity.
+Note that this metric value may be highlighted due to Port 4 issue.
+
 */
 volatile unsigned long* gCountPtr;
 #define gCount (*gCountPtr)
