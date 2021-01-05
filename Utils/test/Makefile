@@ -9,5 +9,9 @@ readTsc_test:readTsc_test.cpp
 return_address_stack:return_address_stack.cpp
 	g++ return_address_stack.cpp -O0 -o $@
 
+unalign_atomic:unalign_atomic.cpp
+	g++ unalign_atomic.cpp -O0 -DATOMIC_CROSS_CACHELINE -o atomic_cross_cacheline -pthread
+	g++ unalign_atomic.cpp -O0 -o atomic_in_cacheline -pthread
+
 clean:
-	rm -f  readTsc_test return_address_stack core rcu_test
+	rm -f  readTsc_test return_address_stack core rcu_test atomic_in_cacheline atomic_cross_cacheline  
