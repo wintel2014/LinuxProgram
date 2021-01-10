@@ -1,4 +1,52 @@
-cat /boot/config-$(uname -r) | grep CONFIG_X86_MSR
-if CONFIG_X86_MSR=m modprobe msr
-   CONFIG_X86_MSR=n compile it again
+rdpmc
+echo 2 | sudo tee  /sys/devices/cpu/rdpmc
+
+1. MSR. check kernel module
+	cat /boot/config-$(uname -r) | grep CONFIG_X86_MSR
+	if CONFIG_X86_MSR=m => modprobe msr
+	   CONFIG_X86_MSR=n => compile it again
+	
+	ls /dev/cpu/0/msr
+	/dev/cpu/0/msr
+
+
+2. Perf events
+check events:libpfm4
+https://sourceforge.net/p/perfmon2/libpfm4/ci/master/tree/
+git clone https://git.code.sf.net/p/perfmon2/libpfm4
+make
+cp ./examples/showevtinfo ./examples/check_events /bin
+
+	showevtinfo | grep LLC_MISS -A 10
+	Name     : LLC_MISSES
+	Equiv	 : None
+	Flags    : None
+	Desc     : count each cache miss condition for references to the last level cache. The event count may include speculation, but excludes cache line fills due to hardware prefetch
+	Code     : 0x412e
+	
+	check_events LLC_MISSES
+	Requested Event: LLC_MISSES
+	Actual    Event: ix86arch::LLC_MISSES:k=1:u=1:e=0:i=0:c=0:t=0:intx=0:intxcp=0
+	PMU            : Intel X86 architectural PMU
+	IDX            : 37748740
+	Codes          : 0x53412e
+	
+	perf stat -e cache-misses -e cpu/config=0x53412e,name="LLC_MISSES"/ ls
+	 Performance counter stats for 'ls':
+	
+	            22,574      cache-misses
+	            22,574      LLC_MISSES
+	
+	showevtinfo OFFCORE_RESPONSE_0
+	Umask-04 : 0x18007 : PMU : [ANY_REQUEST] : [default] : Alias to DMND_DATA_RD:DMND_RFO:DMND_CODE_RD:OTHER
+	Umask-05 : 0x10000 : PMU : [ANY_RESPONSE] : [default] : Response: count any response type
+	
+	check_events OFFCORE_RESPONSE_0:ANY_RESPONSE
+	Requested Event: OFFCORE_RESPONSE_0
+	Actual    Event: skl::OFFCORE_RESPONSE_0:ANY_REQUEST:ANY_RESPONSE:k=1:u=1:e=0:i=0:c=0:t=0:intx=0:intxcp=0
+	PMU            : Intel Skylake
+	IDX            : 419430485
+	Codes          : 0x5301b7 0x18007
+	
+	perf stat -e cache-misses -e cpu/config=0x5301b7,config1=0x18007,name="OFFCORE_RESPONSE_0:ANY_REQUEST:ANY_RESPONSE"/ ls
 

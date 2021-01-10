@@ -1,4 +1,4 @@
-#include "CPUID.hpp"
+#include "../CPUID.hpp"
 int main()
 {
   PMC::Parse();
