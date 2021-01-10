@@ -3,7 +3,7 @@ for governor in $(ls /sys/devices/system/cpu/cpufreq/)
 do
     if [[ $governor != 'boost' ]]
     then
-        echo performance | sudo tee "/sys/devices/system/cpu/cpufreq/$governor/scaling_governor"
+        echo performance | tee "/sys/devices/system/cpu/cpufreq/$governor/scaling_governor"
     fi
 done
 
@@ -28,3 +28,6 @@ grep 'CONFIG_HZ=' /boot/config-$(uname -r)
 echo -n "watchdog_thresh:"
 cat /proc/sys/kernel/watchdog_thresh
 grep isolcpus  /etc/default/grub
+
+echo "Disable Address Space Layout randomization"
+echo 0 | tee /proc/sys/kernel/randomize_va_space

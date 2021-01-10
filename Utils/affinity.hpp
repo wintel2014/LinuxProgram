@@ -1,3 +1,4 @@
+#pragma once
 #include "sysconf.h"
 #include <sched.h>
 #include <unistd.h> /* sysconf */

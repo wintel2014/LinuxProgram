@@ -28,13 +28,13 @@ int main()
     for(unsigned i=0; i<ElementCount; i++)
     {
         count++;
-        ret += Data[i];
+        ret += (volatile int)Data[i];
     }
 
     for(unsigned i=0; i<ElementCount; i++)
     {
         count++;
-        ret -= Data[i];
+        ret -= (volatile int)Data[i];
     }
     end = readTsc()-start;
     printf("%ld, cycles=%ld count=%d\n", ret, end, count);
@@ -49,13 +49,13 @@ int main()
         for(unsigned i=current; i<End; i++)
         {
             count++;
-            ret += Data[i];
+            ret += (volatile int)Data[i];
         }
 
         for(unsigned i=current; i<End; i++)
         {
             count++;
-            ret -= Data[i];
+            ret -= (volatile int)Data[i];
         }
     }
     end = readTsc()-start;
