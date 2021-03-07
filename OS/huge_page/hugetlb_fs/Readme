@@ -1,0 +1,9 @@
+find /sys/ -name nr_hugepages 2>/dev/null
+/sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
+/sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages
+/sys/devices/system/node/node0/hugepages/hugepages-2048kB/nr_hugepages
+/sys/devices/system/node/node0/hugepages/hugepages-1048576kB/nr_hugepages
+
+find /proc/ -name nr_hugepages 2>/dev/null
+/proc/sys/vm/nr_hugepages
+
