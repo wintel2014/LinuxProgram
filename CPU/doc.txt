@@ -1,0 +1,11 @@
+wget -q http://home.eng.iastate.edu/~zzhang/courses/cpre585_f03/slides/
+for file in $(cat index.html | gawk -F'href="' '{print $2}' | gawk -F '">' '{print $1}'); do wget http://home.eng.iastate.edu/~zzhang/courses/cpre585_f03/slides/$file; done
+rm index.html
+
+https://compas.cs.stonybrook.edu/~nhonarmand/courses/sp15/cse502/slides/09-rob.pdf
+
+
+BASE_URL=https://compas.cs.stonybrook.edu/~nhonarmand/courses/sp15/cse502/slides/
+wget -q $BASE_URL
+for file in $(cat index.html | gawk -F'href="' '{print $2}' | gawk -F '">' '{print $1}'); do wget "$BASE_URL/$file"; done
+rm index.html
