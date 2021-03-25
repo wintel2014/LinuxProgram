@@ -50,6 +50,25 @@ int find(T start, T end, CMP FunObj)
        index++;
     }
 }
+
+
+//The second template parameter is Non-type
+//if not, it's failed to specialization
+template <typename T, T> struct proxy;
+
+template<typename T, typename Ret, typename...Args, Ret(T::*MF)(Args...)>
+struct proxy<Ret(T::*)(Args...), MF>
+{
+  static Ret call (T& obj, Args&&... args)
+  {
+    return (obj.*MF)(std::forward<Args>(args)...);
+  }
+  Ret operator () (T& obj, Args&&... args)
+  {
+    return (obj.*MF)(std::forward<Args>(args)...);
+  }
+};
+
 int main()
 {
     typedef void (Base::*Base_show)(int);
@@ -74,4 +93,12 @@ int main()
 
     Base BaseObjArray[5]={Base(1), Base(2), Base(3), Base(4), Base(5)};
     cout<<"Index="<<find(BaseObjArray, BaseObjArray+5, bind(&Base::CompareMember, 4))<<endl;
+
+
+    auto callBack = proxy<decltype(&Base::show), &Base::show>::call;
+    callBack(B, 12);
+
+    proxy<decltype(&Base::show), &Base::show> p;
+    decltype(p)::call(B, 12);
+    p(B, 12);
 }
