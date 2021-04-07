@@ -1,5 +1,7 @@
 #pragma once
+#include <stdio.h>
 #include "sysconf.h"
+#include "gettid.hpp"
 #include <sched.h>
 #include <unistd.h> /* sysconf */
 
@@ -45,4 +47,12 @@ int SetAffinity(cpu_set_t& mask)
         return -1;
     }
     return 0;
+}
+
+void sched_fifo()
+{
+    struct sched_param param;
+    param.sched_priority = sched_get_priority_max(SCHED_FIFO); //same to watchdog/x
+    if (sched_setscheduler(gettid(), SCHED_FIFO, &param)<0)
+        perror("Faied to sched_setscheduler");
 }
