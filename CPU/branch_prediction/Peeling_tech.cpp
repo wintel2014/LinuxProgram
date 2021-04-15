@@ -27,18 +27,30 @@ void __attribute__((noinline)) handle_other()
 {
     asm("nop");
 }
-#define LOOP (1000*1000)
+
+auto inline generateRandom()
+{
+    long int n = random(); // random integer 0 to RAND_MAX
+#if 1
+    if (n > 8) { // n will be 0 half the times
+        n = 0; // updates branch history to predict taken
+    }
+#else
+    if ( ! (n & 0x01) ) { // n will be 0 half the times
+       n = 0; // updates branch history to predict taken
+    }
+#endif
+    return n;
+}
+
+#define LOOP (1000*1000*10)
 void fun1()
 {
     long unsigned duration = 0;
     unsigned loop = 0;
     while(loop++ < LOOP)
     {
-        int n = random(); // random integer 0 to RAND_MAX
-        if ( ! (n & 0x01) ) { // n will be 0 half the times
-            n = 0; // updates branch history to predict taken
-        }
-        n = n&0x7;
+        auto n = generateRandom();
         // indirect branches with multiple taken targets
         // may have lower prediction rates
         auto start = readTsc();
@@ -57,14 +69,11 @@ void fun1()
 }
 void fun2()
 {
-    int n = random(); // Random integer 0 to RAND_MAX
-    if( ! (n & 0x01) )
-        n = 0; // n will be 0 half the times
-    n = n&0x7;
     long unsigned duration = 0;
     unsigned loop = 0;
     while(loop++ < LOOP)
     {
+        auto n = generateRandom();
         auto start = readTsc();
         if (!n)
             handle_0(); // Peel out the most common target with correlated branch history
@@ -80,7 +89,6 @@ void fun2()
         }
         duration += readTsc()-start;
     }
-
     printf("%s : %ld\n",__PRETTY_FUNCTION__, duration/LOOP);
 }
 
