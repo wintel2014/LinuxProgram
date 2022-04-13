@@ -1,6 +1,5 @@
-
 #include <x86intrin.h>
-inline unsigned long readTsc()
+inline size_t readTsc()
 {
     register unsigned long tsc __asm__("%rax");
     __asm__ volatile("rdtsc;\n shl $0x20, %%rdx;\n or %%rdx,%%rax": "=a"(tsc):: "%rcx", "%rdx");
@@ -17,34 +16,42 @@ static inline size_t fls(unsigned long word)
 	return word;
 }
 
-static inline void clear_bit(long nr,   long *addr)
+static inline void clear_bit(long nr,   size_t *addr)
 {
 	asm volatile("btrq %1,%0" : : "m" (*( long *) (addr)), "Ir" (nr) : "memory");
 }
-static inline void set_bit(long nr,   long *addr)
+static inline void set_bit(long nr,   size_t *addr)
 {
 	asm volatile("btsq %1,%0" : : "m" (*( long *) (addr)), "Ir" (nr) : "memory");
 }
 
-
-size_t  lzcnt(long long l)  //Counts the number of leading most significant zero bits 
+static inline size_t  lzcnt(long long l)  //Counts the number of leading most significant zero bits 
 {
     return __lzcnt64(l);
 }
 
-size_t  tzcnt(long long l)  //Counts the number of  trailing least significant zero bits 
+static inline size_t  tzcnt(long long l)  //Counts the number of  trailing least significant zero bits 
 {
     return _tzcnt_u64(l);
 }
 
-size_t BitSetCount(long long data)
+static inline size_t BitSetCount(long long data)
 {
-	size_t count = 0;
+#if 1
+	size_t count = __builtin_popcountl(data);
+#else
+    size_t count = 0;
 	while(data)
 	{
 		data = data & (data-1);
 		count++;
 	}
+    if (count2!=count)
+    {
+        printf("%lx count=%ld popcnt=%d failed!!!\n",tmp, count, cnt2);
+        exit(-1);
+    }
+#endif
 	return count;
 }
 

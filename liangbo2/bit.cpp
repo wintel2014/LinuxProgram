@@ -65,7 +65,10 @@ static inline size_t ffs_test(unsigned long x)
 	return r + 1;
 }
 
-
+size_t popcnt(unsigned int data)
+{
+    return _mm_popcnt_u32(data);
+}
 long  lzcnt(long long l)  //Counts the number of leading most significant zero bits 
 {
     return __lzcnt64(l);
@@ -173,4 +176,5 @@ int main()
 
 	d2 = 0xF010111;
 	printf("BitSetCount(%lx)=%ld\n", d2, BitSetCount(d2));	
+	printf("popcnt(%lx)=%ld\n", d2, popcnt(d2));	
 }

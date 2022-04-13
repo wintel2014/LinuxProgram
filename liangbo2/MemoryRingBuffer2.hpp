@@ -35,28 +35,62 @@ public:
     }
 
     template<size_t SIZE>
+    void* acquire()
+    {
+        constexpr auto slices = (SIZE+SLICE_SIZE-1)/SLICE_SIZE; //Round2SliceSIZE<SIZE>();
+        auto slot =0;
+        if constexpr(slices==1)
+            slot = Find();
+        else
+            slot = Find<slices>();
+        if (slot)
+        {
+            BitmapOP<BITOP::SET>(slot-1, slices);
+            return reinterpret_cast<void*>(mStorage+64*slot);
+        }
+
+        return nullptr;
+    }
+    
+
+    template<size_t SIZE>
+    void release(void* ptr)
+    {
+        auto slices = Round2SliceSIZE<SIZE>();
+        auto diff = (reinterpret_cast<char*>(ptr) - reinterpret_cast<char*>(mStorage))/64;
+        BitmapOP<BITOP::CLEAR>(diff-1, slices);
+    }
+
+    bool empty()
+    {
+        for(auto iter:mFreeBitMap)
+        {
+            if(ffzll(iter))
+                return  false;
+        }
+        return true;
+    }
+
+    size_t size()
+    {
+        size_t zero_bits = 0;
+        for(auto iter:mFreeBitMap)
+            zero_bits += BitSetCount(~iter);
+        return zero_bits;
+    }
+
+    size_t capacity()
+    {
+        return FIXED_SLICE_CNT;
+    }
+
+private:
+    template<size_t SIZE>
     constexpr unsigned int Round2SliceSIZE()
     {
         return (SIZE+SLICE_SIZE-1)/SLICE_SIZE;
     }
 
-    size_t MaxContinuosZero(unsigned long data)
-    {
-        size_t maxSoFar = 0, currentRet = 0;
-        unsigned long BIT=0x1;
-        for(int i=0; i<64; i++)
-        {
-            if((BIT<<i) & data)
-            {         
-                currentRet=0;
-            }
-            else
-            {
-                maxSoFar = std::max(++currentRet, maxSoFar);
-            }
-        }
-		return maxSoFar;
-    }
     //0:No such bit is met requiremnt
     template <size_t SLICES>
     size_t Find() //bit pos count from 1
@@ -117,29 +151,30 @@ public:
         CLEAR
     };
 
-    //0...30XX63 64XXXXXX127 128XX132
+    //....XXXXXXX XXXXXXXXXXXX XXXXXXXXX
+    //0...30...63 64.......127 128...132
     //NR=30, bits=(64-30)+64+(132-128)=102   [30, 132)
-    //leftOddBits=34 rightOddBits=4  pos=1 bytes=(102-34)/64=1 
+    //leftOddBits=34 rightOddBits=4  bytes=(102-34)/64=1 
     template<BITOP op>
-    void BitMAPOP(size_t NR, size_t bits)
+    void BitmapOP(size_t NR, size_t bits)
     {
         auto const endBit = NR+bits; //[NR, endbit) should be set
         auto pos = 0;
         auto bytes = 0;
 
         //process left odd bits        
-            pos = NR/64;
-            auto const leftEndBit = (NR/64+1)*64;
-            for(auto i=NR; i<std::min(endBit,leftEndBit); i++)
-            {
-                auto bit = i&0x3F;
-                if constexpr (op == BITOP::SET)
-                    set_bit(bit, reinterpret_cast<long*>(mFreeBitMap+pos));
-                else
-                    clear_bit(bit, reinterpret_cast<long*>(mFreeBitMap+pos));
-            }
-            if(endBit<=leftEndBit) //In same "Long"
-                return ;
+        pos = NR/64;
+        auto const leftEndBit = (NR/64+1)*64;
+        for(auto i=NR; i<std::min(endBit,leftEndBit); i++)
+        {
+            auto bit = i&0x3F;
+            if constexpr (op == BITOP::SET)
+                set_bit(bit, mFreeBitMap+pos);
+            else
+                clear_bit(bit, mFreeBitMap+pos);
+        }
+        if(endBit<=leftEndBit) //In same "Long"
+            return ;
         
         //continuos "long" bits
         pos++;
@@ -152,66 +187,18 @@ public:
                 mFreeBitMap[i] = 0x00;
         }
 
-	//process right odd bits 
+        //process right odd bits 
         pos += bytes;
         auto rightOddBits = endBit&0x3F;
         for(auto bit=0; bit<rightOddBits; bit++)
         {
             if constexpr (op == BITOP::SET)
-                set_bit(bit, reinterpret_cast<long*>(mFreeBitMap+pos));
+                set_bit(bit, mFreeBitMap+pos);
             else
-                clear_bit(bit, reinterpret_cast<long*>(mFreeBitMap+pos));
+                clear_bit(bit, mFreeBitMap+pos);
         }
     }
-    template<size_t SIZE>
-    void* acquire()
-    {
-        constexpr auto slices = (SIZE+SLICE_SIZE-1)/SLICE_SIZE; //Round2SliceSIZE<SIZE>();
-        auto slot =0;
-        if constexpr(slices==1)
-            slot = Find();
-        else
-            slot = Find<slices>();
-        if (slot)
-        {
-            BitMAPOP<BITOP::SET>(slot-1, slices);
-            return reinterpret_cast<void*>(mStorage+64*slot);
-        }
 
-        return nullptr;
-    }
-    
-
-    template<size_t SIZE>
-    void release(void* ptr)
-    {
-        auto slices = Round2SliceSIZE<SIZE>();
-        auto diff = (reinterpret_cast<char*>(ptr) - reinterpret_cast<char*>(mStorage))/64;
-        BitMAPOP<BITOP::CLEAR>(diff-1, slices);
-    }
-
-    bool empty()
-    {
-        for(auto iter:mFreeBitMap)
-        {
-            if(ffzll(iter))
-                return  false;
-        }
-        return true;
-    }
-
-    size_t size()
-    {
-        size_t zero_bits = 0;
-        for(auto iter:mFreeBitMap)
-            zero_bits += BitSetCount(~iter);
-        return zero_bits;
-    }
-
-    size_t capacity()
-    {
-        return FIXED_SLICE_CNT;
-    }
     static constexpr unsigned long MEM_TOTAL_BYTES=FIXED_SLICE_CNT*SLICE_SIZE;
     static constexpr size_t BITMAP_CNT = FIXED_SLICE_CNT/sizeof(size_t)/8;
 
@@ -219,4 +206,3 @@ private:
     char* mStorage;
     size_t mFreeBitMap[BITMAP_CNT];  //0:Free 1:Allocated
 };
-
