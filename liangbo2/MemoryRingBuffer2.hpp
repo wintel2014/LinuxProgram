@@ -18,7 +18,7 @@ class MemoryRingBuffer
 public:
     MemoryRingBuffer()
     {
-        mStorage = reinterpret_cast<char*>(std::aligned_alloc(64, MEM_TOTAL_BYTES));
+        mStorage = reinterpret_cast<char*>(std::aligned_alloc(SLICE_SIZE, MEM_TOTAL_BYTES));
         if(!mStorage)
         {
             perror("Failed to allocate memory:");
@@ -46,7 +46,7 @@ public:
         if (slot)
         {
             BitmapOP<BITOP::SET>(slot-1, slices);
-            return reinterpret_cast<void*>(mStorage+64*slot);
+            return reinterpret_cast<void*>(mStorage+SLICE_SIZE*slot);
         }
 
         return nullptr;
@@ -57,7 +57,7 @@ public:
     void release(void* ptr)
     {
         auto slices = Round2SliceSIZE<SIZE>();
-        auto diff = (reinterpret_cast<char*>(ptr) - reinterpret_cast<char*>(mStorage))/64;
+        auto diff = (reinterpret_cast<char*>(ptr) - reinterpret_cast<char*>(mStorage))/SLICE_SIZE;
         BitmapOP<BITOP::CLEAR>(diff-1, slices);
     }
 
@@ -79,9 +79,14 @@ public:
         return zero_bits;
     }
 
-    size_t capacity()
+    constexpr size_t capacity()
     {
         return FIXED_SLICE_CNT;
+    }
+
+    constexpr size_t cellSize()
+    {
+        return SLICE_SIZE;
     }
 
 private:
@@ -104,10 +109,10 @@ private:
         {
             for(int bit=0; bit<FIXED_SLICE_CNT; bit++)
             {
-                auto shift = bit%64;
+                auto shift = bit%BITS_PER_LONG;
                 if(shift==0)
                 {
-                    data = pBM[bit/64];
+                    data = pBM[bit/BITS_PER_LONG];
                 }
                 if((BIT<<shift) & data)
                 {
@@ -138,7 +143,7 @@ private:
             NR=ffzll(mFreeBitMap[i]);
             if(NR)
             {
-                ret = i*64+NR;
+                ret = i*BITS_PER_LONG+NR;
                 return ret;
             }
         }
@@ -163,8 +168,8 @@ private:
         auto bytes = 0;
 
         //process left odd bits        
-        pos = NR/64;
-        auto const leftEndBit = (NR/64+1)*64;
+        pos = NR/BITS_PER_LONG;
+        auto const leftEndBit = (NR/BITS_PER_LONG+1)*BITS_PER_LONG;
         for(auto i=NR; i<std::min(endBit,leftEndBit); i++)
         {
             auto bit = i&0x3F;
@@ -178,7 +183,7 @@ private:
         
         //continuos "long" bits
         pos++;
-        bytes = endBit/64 - pos;
+        bytes = endBit/BITS_PER_LONG - pos;
         for(auto i=pos; i<pos+bytes; i++)
         {
             if constexpr (op == BITOP::SET)
@@ -199,8 +204,9 @@ private:
         }
     }
 
-    static constexpr unsigned long MEM_TOTAL_BYTES=FIXED_SLICE_CNT*SLICE_SIZE;
-    static constexpr size_t BITMAP_CNT = FIXED_SLICE_CNT/sizeof(size_t)/8;
+    static constexpr size_t MEM_TOTAL_BYTES=FIXED_SLICE_CNT*SLICE_SIZE;
+    static constexpr size_t BITS_PER_LONG =  sizeof(size_t)*8;
+    static constexpr size_t BITMAP_CNT = FIXED_SLICE_CNT/BITS_PER_LONG;
 
 private:
     char* mStorage;

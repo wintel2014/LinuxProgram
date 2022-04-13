@@ -65,9 +65,9 @@ int main()
 
 
     MemoryRingBuffer mbr;
-
+    constexpr size_t slice_size = mbr.cellSize();
     std::vector<void*> slotPtrVec;
-    for(int i=0; i<1024*16; i++)
+    for(int i=0; i<mbr.capacity(); i++)
     {
         slotPtrVec.push_back(mbr.acquire<sizeof(int)>());
     }
@@ -87,14 +87,14 @@ int main()
 
     //申请1个随机Size的T，并释放
     begin = readTsc();
-    ptr = mbr.acquire<65*64>();
+    ptr = mbr.acquire<65*slice_size>();
     printf("Acquire<65*64>() consumed %ld cycles\n", readTsc()-begin);
-    mbr.release<65*64>(ptr);
+    mbr.release<65*slice_size>(ptr);
 
     begin = readTsc();
-    ptr = mbr.acquire<333*64>();
+    ptr = mbr.acquire<333*slice_size>();
     printf("Acquire<333*64>() consumed %ld cycles\n", readTsc()-begin);
-    mbr.release<333*64>(ptr);
+    mbr.release<333*slice_size>(ptr);
 
     //申请N个固定Size的T，并释放 
     constexpr size_t N=1024*8;
@@ -121,7 +121,7 @@ int main()
 
     //申请N个随机Size的T，并释放
     constexpr size_t N2=128;
-    constexpr size_t randomSize = 75*64;
+    constexpr size_t randomSize = 75*slice_size;
     std::array<void*, N2> slotPtrArray2;
     memset(&slotPtrArray2[0], 0 , N2);
     begin = readTsc();
@@ -175,9 +175,9 @@ int main()
         for(int i=0; i<cnt; i++)
         {
             if(i&1)
-                slotPtrVec2.emplace_back(mbr.acquire<3*64>());
+                slotPtrVec2.emplace_back(mbr.acquire<3*slice_size>());
             else
-                slotPtrVec2.emplace_back(mbr.acquire<4*64>());
+                slotPtrVec2.emplace_back(mbr.acquire<4*slice_size>());
         }
     }
     printf("Random-Acquire<random>() consumed %ld cycles\n", (readTsc()-begin)/totalCnt);
