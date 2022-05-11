@@ -2,6 +2,28 @@
 #include <boost/preprocessor/seq/for_each.hpp>
 #include <stddef.h>
 #include <stdio.h>
+/*
+BOOST_PP_SEQ_FOR_EACH(macro, data, seq)
+r: 
+data: Auxiliary data passed to macro.
+seq: The seq for which macro will be invoked on each element.
+
+If seq is (a)(b)(c), 
+it expands to the sequence:  macro(r, data, a) macro(r, data, b) macro(r, data, c)
+
+#define SEQ (x)(y)(z)(a)(b)(c)
+#define MACRO(r, data, elem)  r,
+printf("%d %d %d %d %d %d %d\n",  BOOST_PP_SEQ_FOR_EACH(MACRO, _, SEQ) 0); //2 3 4 5 6 7 0
+
+
+BOOST_PP_SEQ_ENUM(seq) expands to a comma-separated list of the elements in seq.
+For example, BOOST_PP_SEQ_ENUM((x)(y)(z)) expands to  x, y, z
+
+BOOST_PP_VARIADIC_TO_SEQ(a, b, c) // expands to (a)(b)(c)
+
+#define TUPLE (a, b, c, d)
+BOOST_PP_TUPLE_ELEM(0, TUPLE)  //a
+*/
 
 typedef char C_Array[17];
 #define FIELDS \
@@ -62,6 +84,8 @@ struct D2
 int main()
 {
   BOOST_PP_SEQ_FOR_EACH(ShowMemOffset, NA, BOOST_PP_VARIADIC_TO_SEQ(FIELDS));
+  Foo foo;
+  printf("member : %d %d %d %d\n", foo.mChar, foo.mCharArray[0], foo.mShort-1, foo.mInt-2);
   printf("\n");
   printf("mC_in_D1=%ld mC_in_D2=%ld\n", OFFSET(D1, mC_in_D1), OFFSET(D2, mC_in_D2));
 }
