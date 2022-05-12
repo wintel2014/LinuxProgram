@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdio.h>
+#include <boost/core/demangle.hpp>
 struct Foo
 {
     int D1;
@@ -23,5 +24,10 @@ int main()
     (obj.*pFunc)();
 
     int Foo::*pD2 = &Foo::D2;
-    printf("%d\n",obj.*pD2);
+    printf("obj.*pD2=%d\n",obj.*pD2);
+
+    decltype(Foo::D1) type1; //int, same to obj.D1
+    decltype(&Foo::D1) type2; // int Foo::*
+    auto value = &Foo::D1; //it's a "value" rather than "type"
+    printf("[%s] [%s] %p->%d(adjacent to vptr) \n", boost::core::demangle(typeid(type1).name()).c_str(), boost::core::demangle(typeid(type2).name()).c_str(), value, obj.*value);
 }
