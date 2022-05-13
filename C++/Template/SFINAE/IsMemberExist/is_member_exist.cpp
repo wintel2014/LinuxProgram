@@ -29,6 +29,20 @@ struct has_member_DataMember
     enum { value = std::is_same<decltype(Check<T>(0)),std::true_type>::value  };
 };
  
+template <typename T>
+struct has_bitfield_bit
+{
+private:
+    template<typename U>
+    static auto Check(int) -> decltype(&U::bit, std::false_type());
+
+    template<typename U>
+    static std::true_type Check(...);
+
+public:
+    enum {value = std::is_same_v<decltype(Check<T>(0)), std::true_type> };
+
+};
 struct class1
 {
     int DataMember;
@@ -38,6 +52,12 @@ struct class1
 struct class2
 {
     void fun2() { std::cout << "fun2" << std::endl;  }
+    int bit;
+};
+
+struct class3
+{
+    int bit : 2;
 };
  
 int main()
@@ -62,5 +82,9 @@ int main()
     	std::cout << "DataMember is defined in class2"  << std::endl;
     else
     	std::cout << "DataMember is not defined in class2"  << std::endl;
+
+    static_assert(!has_bitfield_bit<class2>::value);
+    static_assert( has_bitfield_bit<class3>::value);
     return 0;
+
 }
