@@ -36,6 +36,16 @@ void member<&Foo::D4>()
     printf("D4\n");
 }
 
+template<typename>
+struct Trait;
+
+template<typename CLASS, typename T>
+struct Trait<T CLASS::*>
+{
+    using class_type = CLASS;
+    using value_type=T;
+};
+
 int main()
 {
     Foo obj= {1,2,3};
@@ -59,4 +69,6 @@ int main()
     member<&Foo::D2>();
     member<&Foo::D3>();
     member<&Foo::D4>();
+
+    printf("%s\n", boost::core::demangle(typeid(Trait<decltype(&Foo::D1)>::class_type).name()).c_str() );
 }

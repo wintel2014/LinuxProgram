@@ -36,6 +36,7 @@ typedef char C_Array[17];
   (float,     mF,       5.0),\
   (double,    mD,       6.0)
 
+
 template <typename Type, typename MemType, MemType Type::*MemPtr>
 constexpr size_t OffsetFunc(Type &&obj)
 {
@@ -47,6 +48,46 @@ constexpr size_t OffsetFunc(Type &&obj)
 struct Foo
 {
   BOOST_PP_SEQ_FOR_EACH(DeclareMemVar, NA, BOOST_PP_VARIADIC_TO_SEQ(FIELDS));
+};
+
+#define FIELDS2 \
+    (int,   mInt),\
+    (union, {long mU_Long; double mU_Double;}),\
+    (int,   mD:1),\
+    (long,  mLong)
+#define DECLARE_FIELD_WIDTH_COMMON(MEMBER, WIDTH)\
+tempalte <typename T>\
+struct MAY_BIT_FIELD_WIDTH_##MEMBER\
+{\
+private:\
+    template <typename U>\
+    static auto Check(int)->decltype(&U::MEMBER, std::array<char, WIDTH>{});\
+    \
+    template<typename U> \
+    static auto Check(...)->std:array<char, WIDTH>{};\
+    \
+public:\
+    enum {value = sizeof(decltype(Check<T>(0)))};\
+};
+#define DECLARE_FIELD_WIDTH_CLASS_SPECIFICATION(CLASS, MEMBER, WIDTH)\
+template <>\
+struct MAY_BIT_FIELD_WIDTH_##MEMBER<CLASS>\
+{\
+private:\
+    template <typename U>\
+    static auto Check(int)->decltype(&U::MEMBER, std::array<char, WIDTH>{});\
+    \
+    template<typename U> \
+    static auto Check(...)->std:array<char, WIDTH>{};\
+    \
+public:\
+    enum {value = sizeof(decltype(Check<CLASS>(0)))};\
+}
+
+#define DeclareMemVar_NO_INIT(r, data, ele) BOOST_PP_TUPLE_ELEM(0, ele) BOOST_PP_TUPLE_ELEM(1, ele) ;
+struct Foo2
+{
+  BOOST_PP_SEQ_FOR_EACH(DeclareMemVar_NO_INIT, NA, BOOST_PP_VARIADIC_TO_SEQ(FIELDS2));
 };
 
 #define OFFSET(STRUCT, MEMBER) OffsetFunc<STRUCT, decltype(STRUCT::MEMBER), &STRUCT::MEMBER>(STRUCT())
