@@ -63,5 +63,8 @@ int main()
 
     std::string real_name_ref = boost::core::demangle(typeid(*pB).name());
     std::cout << typeid(*pB).name() << " => " << real_name_ref << '\n';
+
+    std::string real_name_ptr = boost::core::demangle(typeid(&(*pB)).name());
+    std::cout << typeid(&(*pB)).name() << " => " << real_name_ptr<< '\n';
     return 0;
 }
