@@ -12,7 +12,11 @@ public:
     {
         cout << "Hello world" << endl;
     }
-    Base(int value) :value(value) {};
+    Base(int value) :value(value)
+    {
+        std::string real_name_ref = boost::core::demangle(typeid(*this).name());
+        std::cout <<"typeid(*this):" << typeid(*this).name() << " => " << real_name_ref << '\n';
+    };
     Base() = default;
 };
 
