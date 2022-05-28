@@ -1,5 +1,6 @@
 #include <boost/preprocessor/variadic/to_seq.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
+#include <boost/preprocessor/stringize.hpp>
 #include <stddef.h>
 #include <stdio.h>
 /*
@@ -25,16 +26,41 @@ BOOST_PP_VARIADIC_TO_SEQ(a, b, c) // expands to (a)(b)(c)
 BOOST_PP_TUPLE_ELEM(0, TUPLE)  //a
 */
 
+template <int HEAD, int...LEFT>
+constexpr int MAX_V()
+{
+    if constexpr(sizeof...(LEFT) == 0)
+        return HEAD;
+    else
+        return HEAD > MAX_V<LEFT...>() ? HEAD : MAX_V<LEFT...>();
+}
+
 typedef char C_Array[17];
 #define FIELDS \
-  (char,      mChar,      0),\
-  (C_Array,   mCharArray, 0),\
-  (short,     mShort,     1),\
-  (int,       mInt,       2),\
-  (long,      mLong,      3),\
-  (long long, mLL,        4),\
-  (float,     mF,       5.0),\
-  (double,    mD,       6.0)
+  (char,      mChar,      0,    8),\
+  (C_Array,   mCharArray,'a',  18),\
+  (short,     mShort,     1,    8),\
+  (int,       mInt,       2,    8),\
+  (long,      mLong,      3,    8),\
+  (long long, mLL,        4,    8),\
+  (float,     mF,       5.0,    8),\
+  (double,    mD,       6.0,    12)
+//  type     name    init val   output width
+
+
+#define DECLARE_PRINT_FIELD_BY_WIDTH_COMMON(MEMBER, WIDTH)\
+template <typename T>\
+struct BOOST_PP_CAT (PRINT_FIELD_BY_WITDH_, MEMBER)\
+{\
+    template <typename Arg>\
+    static void Print(Arg arg)\
+    {PrintF(arg, width);}\
+    static void Print()\
+    {printf("%*s", width, BOOST_PP_STRINGIZE(MEMBER));}\
+    static constexpr int width=MAX_V<WIDTH, sizeof(BOOST_PP_STRINGIZE(MEMBER))>();\
+};
+#define DECLARE_PRINT_FIELDS_STURCT_TEMPLATE(r, data, type) DECLARE_PRINT_FIELD_BY_WIDTH_COMMON(BOOST_PP_TUPLE_ELEM(1, type), BOOST_PP_TUPLE_ELEM(3, type))
+#define DECLARE_PRINT_STRUCT_TEMPLATES(FIELDS) BOOST_PP_SEQ_FOR_EACH(DECLARE_PRINT_FIELDS_STURCT_TEMPLATE, NA, BOOST_PP_VARIADIC_TO_SEQ(FIELDS));
 
 
 template <typename Type, typename MemType, MemType Type::*MemPtr>
@@ -43,18 +69,61 @@ constexpr size_t OffsetFunc(Type &&obj)
     return (char*)&(obj.*MemPtr) - (char*)&obj;
 }
 
-#define DeclareMemVar(r, data, ele) BOOST_PP_TUPLE_ELEM(0, ele) BOOST_PP_TUPLE_ELEM(1, ele) {r+BOOST_PP_TUPLE_ELEM(2, ele)};
+#define DeclareMemVar(r, data, ele) BOOST_PP_TUPLE_ELEM(0, ele) BOOST_PP_TUPLE_ELEM(1, ele) {BOOST_PP_TUPLE_ELEM(2, ele)};
 
 struct Foo
 {
   BOOST_PP_SEQ_FOR_EACH(DeclareMemVar, NA, BOOST_PP_VARIADIC_TO_SEQ(FIELDS));
 };
 
+void PrintF(char value, int WIDTH)
+{printf("%*d", WIDTH, value);}
+void PrintF(short value, int WIDTH)
+{printf("%*d", WIDTH, value);}
+void PrintF(int value, int WIDTH)
+{printf("%*d", WIDTH, value);}
+void PrintF(long value, int WIDTH)
+{printf("%*ld", WIDTH, value);}
+void PrintF(long long value, int WIDTH)
+{printf("%*lld", WIDTH, value);}
+void PrintF(float value, int WIDTH)
+{printf("%*f", WIDTH, value);}
+void PrintF(double value, int WIDTH)
+{printf("%*lf", WIDTH, value);}
+void PrintF(const char* value, int WIDTH)
+{printf("%*s", WIDTH, value);}
+
+DECLARE_PRINT_STRUCT_TEMPLATES(FIELDS);
+
+//specification output
+template<>
+struct PRINT_FIELD_BY_WITDH_mF<Foo> 
+{
+    template <typename Arg>
+    static void Print(Arg arg)
+    {printf("%*.03f", width, arg);}
+    static void Print()
+    {printf("%*s", width, "mF");}
+    static constexpr int width=10;
+};
+void PrintEachMemberFormat(Foo& data)
+{
+    //PRINT_FIELD_BY_WITDH_mChar<Foo>::Print();
+    #define PRINT_HEADER(r, classType, elem) BOOST_PP_CAT(PRINT_FIELD_BY_WITDH_, BOOST_PP_TUPLE_ELEM(1, elem))<classType>::Print();
+    #define PRINT_VALUE(r, classType, elem) BOOST_PP_CAT(PRINT_FIELD_BY_WITDH_, BOOST_PP_TUPLE_ELEM(1, elem))<classType>::Print(data.BOOST_PP_TUPLE_ELEM(1, elem));
+    BOOST_PP_SEQ_FOR_EACH(PRINT_HEADER, Foo, BOOST_PP_VARIADIC_TO_SEQ(FIELDS));
+    printf("\n");
+    BOOST_PP_SEQ_FOR_EACH(PRINT_VALUE,  Foo, BOOST_PP_VARIADIC_TO_SEQ(FIELDS));
+    //PRINT_FIELD_BY_WITDH_mChar<Foo>::Print(data.mChar);
+    printf("\n");
+}
+
 #define FIELDS2 \
     (int,   mInt),\
     (union, {long mU_Long; double mU_Double;}),\
     (int,   mD:1),\
     (long,  mLong)
+
 #define DECLARE_FIELD_WIDTH_COMMON(MEMBER, WIDTH)\
 tempalte <typename T>\
 struct MAY_BIT_FIELD_WIDTH_##MEMBER\
@@ -84,6 +153,7 @@ public:\
     enum {value = sizeof(decltype(Check<CLASS>(0)))};\
 }
 
+
 #define DeclareMemVar_NO_INIT(r, data, ele) BOOST_PP_TUPLE_ELEM(0, ele) BOOST_PP_TUPLE_ELEM(1, ele) ;
 struct Foo2
 {
@@ -98,6 +168,7 @@ struct Foo2
       OFFSET(Foo, BOOST_PP_TUPLE_ELEM(1, ele)),\
      sizeof(BOOST_PP_TUPLE_ELEM(0, ele))\
     );
+
 
 /*
 Itanium ABI prohibits, for historical reasons, using the tail padding of a base subobject of POD type. but C++11 doesn't have such a prohibition.
@@ -124,11 +195,12 @@ struct D2
 
 int main()
 {
-  BOOST_PP_SEQ_FOR_EACH(ShowMemOffset, NA, BOOST_PP_VARIADIC_TO_SEQ(FIELDS));
-  Foo foo;
-  printf("member : %d %d %d %d\n", foo.mChar, foo.mCharArray[0], foo.mShort-1, foo.mInt-2);
-  printf("\n");
-  printf("mC_in_D1=%ld mC_in_D2=%ld\n", OFFSET(D1, mC_in_D1), OFFSET(D2, mC_in_D2));
+    BOOST_PP_SEQ_FOR_EACH(ShowMemOffset, NA, BOOST_PP_VARIADIC_TO_SEQ(FIELDS));
+    Foo foo;
+    printf("member : %d %d %d %d\n", foo.mChar, foo.mCharArray[0], foo.mShort-1, foo.mInt-2);
+    printf("\n");
+    printf("mC_in_D1=%ld mC_in_D2=%ld\n", OFFSET(D1, mC_in_D1), OFFSET(D2, mC_in_D2));
+    PrintEachMemberFormat(foo);
 }
 
 /* BOOST_PP_TUPLE_ELEM internals
