@@ -1,8 +1,8 @@
 SOURCES := $(wildcard *.cpp)
 OBJS := $(patsubst %.cpp, $(BUILD_PATH)/%.o, $(SOURCES))
 
-main : $(OBJS)
-	g++ $(CPPFLAGS) $^ -o $@
+$(BUILD_PATH)/../bin/main : $(OBJS)
+	g++ $(CPPFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(BUILD_PATH)/%.o : %.cpp
 	g++ -c $(CPPFLAGS) $< -o $@
