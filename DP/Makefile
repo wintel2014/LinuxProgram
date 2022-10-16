@@ -19,3 +19,7 @@ clean:
 	rm -rf dep build bin
 	make  -C test/testcases clean
 
+
+Test :
+	./test/testcases/bin/trader 60366
+

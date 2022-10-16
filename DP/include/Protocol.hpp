@@ -1,4 +1,4 @@
-
+#pragma once
 /*
 Protocol
 The first "short" represents the data's purpose
@@ -12,3 +12,8 @@ enum ProtocolCode : short
     DISPLAY_ORDER=1,
 };
 
+struct DisplayOrder
+{
+    short mType{ProtocolCode::DISPLAY_ORDER};
+    char mSymbol[16];
+}__attribute__((packed));

@@ -1,23 +1,11 @@
 #include <Network.hpp>
-#include <Protocol.hpp>
 #include <ClientOrder.hpp>
 namespace Network {
-    int TCPRWChannel::OnRecvHeader()
+    template<>
+    bool TCPRWChannel<ClientOrder>::OnRecvBody(BufferT buf)
     {
-        switch (mHeader)
-        {
-            case ProtocolCode::ORDER:
-                return sizeof(ClientOrder);
-            default:
-                LOG_ERROR("Can't recognize code=%d\n", mHeader);
-                return -1;
-        }
-        return -1;
-    }
-
-    bool TCPRWChannel::OnRecvBody(BufferT buf)
-    {
-        LOG_INFO("Recv data size=%ld\n", buf.size());
-        return false;
+        auto pOrder = reinterpret_cast<ClientOrder*>(buf.data());
+        LOG_INFO("Recv Order ID=%ld Investor=%s", pOrder->mID, pOrder->mInvestorID);
+        return true;
     }
 }

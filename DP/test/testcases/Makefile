@@ -3,7 +3,7 @@ DEP_PATH=$(PROJECT_ROOT_DIR)/dep
 BUILD_PATH=$(PROJECT_ROOT_DIR)/build
 
 GTEST_ROOT_DIR := $(PROJECT_ROOT_DIR)/../
-CPPFLAGS := -I$(GTEST_ROOT_DIR)include -I$(PROJECT_ROOT_DIR)/include -std=c++17
+CPPFLAGS := -I$(GTEST_ROOT_DIR)include -I$(PROJECT_ROOT_DIR)/include -I$(GTEST_ROOT_DIR)/../include -std=c++17 -g3
 LDFLAGS := -L$(GTEST_ROOT_DIR)/lib -pthread -lgtest
 
 SOURCES := $(wildcard *.cpp)
