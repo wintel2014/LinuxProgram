@@ -4,7 +4,7 @@ BUILD_PATH=$(PROJECT_ROOT_DIR)/build
 
 GTEST_ROOT_DIR := $(PROJECT_ROOT_DIR)/../
 CPPFLAGS := -I$(GTEST_ROOT_DIR)include -I$(PROJECT_ROOT_DIR)/include -I$(GTEST_ROOT_DIR)/../include -std=c++17 -g3
-LDFLAGS := -L$(GTEST_ROOT_DIR)/lib -pthread -lgtest
+LDFLAGS := -L$(GTEST_ROOT_DIR)/lib -pthread -lgtest -lboost_system
 
 SOURCES := $(wildcard *.cpp)
 OBJS := $(patsubst %.cpp, $(BUILD_PATH)/%.o, $(SOURCES))

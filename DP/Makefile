@@ -1,7 +1,7 @@
 PROJECT_ROOT_DIR := $(shell pwd)
 INCLUDE_PATH := -I$(PROJECT_ROOT_DIR)/include
 CPPFLAGS := $(INCLUDE_PATH) -std=c++17 -g3
-LDFLAGS := -pthread
+LDFLAGS := -pthread -lboost_system
 
 BUILD_PATH := $(PROJECT_ROOT_DIR)/build
 DEP_PATH := $(PROJECT_ROOT_DIR)/dep
