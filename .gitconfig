@@ -1,0 +1,6 @@
+[user]
+	name = wintel
+	email = wintel@github.com
+	edtitor = vim
+[core]
+	editor = vim
