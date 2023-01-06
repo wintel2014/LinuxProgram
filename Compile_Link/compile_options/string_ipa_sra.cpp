@@ -6,6 +6,7 @@
         但是会改变string的编译结果，打开该选项会basic_string inline编译；反之，basic_string会使用libstdc++.so.6中的函数
 */
 
+#define NO_M_construct
 #include <string>
 #include <stdio.h>
 int main(int argc, const char* argv[])
