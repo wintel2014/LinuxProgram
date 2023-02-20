@@ -1,0 +1,37 @@
+vector::insert
+	Causes reallocation if the new size() is greater than the old capacity(). If the new size() is greater than capacity(), all iterators and references are invalidated.
+	Otherwise, only the iterators and references before the insertion point remain valid. The past-the-end iterator is also invalidated.
+
+vector::erase
+	Invalidates iterators and references at or after the point of the erase, including the end() iterator.
+
+
+map::insert emplace
+	No iterators or references are invalidated. 
+	insert_return_type insert( node_type&& nh ); //If the insertion is successful, pointers and references to the element obtained while it is held in the node handle are invalidated,
+												   and pointers and references obtained to that element before it was extracted become valid. (since C++17)
+
+map::erase
+	References and iterators to the erased elements are invalidated. Other references and iterators are not affected.
+
+
+
+unordered_map::emplace 
+	If rehashing occurs due to the insertion, all iterators are invalidated. Otherwise iterators are not affected. References are not invalidated. 
+
+unordered_map::erase
+	References and iterators to the erased elements are invalidated. Other iterators and references are not invalidated.
+
+
+list::insert
+	No iterators or references are invalidated.
+
+list::erase
+	References and iterators to the erased elements are invalidated. Other references and iterators are not affected.
+
+
+dequeue::insert insert( const_iterator pos, T&& value );
+	All iterators, including the past-the-end iterator, are invalidated. References are invalidated too. unless pos == begin() or pos == end(), in which case they are not invalidated.
+
+dequeue::erase
+	All iterators and references are invalidated, unless the erased elements are at the end or the beginning of the container, in which case only the iterators and references to the erased elements are invalidated.
