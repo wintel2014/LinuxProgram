@@ -1,0 +1,2 @@
+lttng stop
+lttng view

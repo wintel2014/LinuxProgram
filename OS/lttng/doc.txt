@@ -1,0 +1,8 @@
+https://lttng.org/docs/v2.13/#doc-getting-started
+
+sudo apt install  lttng-tools
+sudo apt install liblttng-ust-dev
+
+man lttng-ust
+
+
