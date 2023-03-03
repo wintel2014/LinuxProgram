@@ -3,5 +3,5 @@
 char gArray[15] = {0};
 int main()
 {
-    printf("%c\n", gArray[15]);
+    *(int*)(0x12345) = 1;
 }
