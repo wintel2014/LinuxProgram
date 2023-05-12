@@ -18,7 +18,15 @@ struct string{
         else
             return get_N_ele<Left...>(index-1);
     }
+
+    static constexpr char value[]= {C...,'\0'};
 };
+
+template<char... C_L, char... C_R>
+string<C_L..., C_R...> merge(string<C_L...>, string<C_R...>)
+{
+    return string<C_L..., C_R...> {};
+}
 
 
 template<typename CharT, CharT... C>
@@ -76,4 +84,6 @@ int main()
 
     print(s1);
     print(s1+s2+s3);
+
+    printf("%s\n", merge(s1, s3).value);
 }
