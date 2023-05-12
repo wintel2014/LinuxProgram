@@ -1,0 +1,15 @@
+VAR += MK_BEFORE_FUNC
+VAR_MK := DF_IN_MK
+
+target_mk:
+	@echo $(VAR_MK)
+
+define declare_dep
+target_in_func : 
+	@echo "target in func ---$(VAR)---"
+	@echo "target in func ---$$(VAR)---"
+endef
+
+VAR += MK_MID_FUNC
+$(eval $(call declare_dep))
+VAR += MK_AFTER_FUNC
