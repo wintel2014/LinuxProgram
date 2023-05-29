@@ -1,0 +1,50 @@
+BIOS调优
+- 开启/关闭超线程：视情况而定，超频场景下需要屏蔽部分核心达到超频的效果，正常业务使用如果需求的核心数较多，则开启超线程。
+- 关闭C-State：C-state是指处理器的低功耗状态。处理器在空闲或轻负载状态下可以进入不同的C-state，以降低功耗并减少发热。禁用C-State防止处理器进入低功耗模式，提高系统性能。
+- 关闭P-State：P-state是指处理器的性能状态。处理器在不同的工作负载下可以调整其工作频率和电压以提供不同的性能水平。禁用P-State让处理器始终保持最大性能模式。
+- 开启睿频(Turbo Boost)：睿频技术的工作原理是根据处理器的温度、功耗和工作负载等因素，动态地调整处理器的时钟频率。
+- 启用XMP :用于提供高性能内存模块的自动配置参数。XMP允许内存模块在超出其标准规格的频率和时序范围内运行，以实现更高的性能。
+
+内核引导项：
+1. 硬件漏洞的软件补丁
+	noibpb：禁用Indirect Branch Prediction Barrier（IBPB），用于缓解Spectre Variant 2漏洞的一种软件补丁。
+	nopti：禁用Kernel Page Table Isolation（KPTI），用于缓解Meltdown漏洞的一种软件补丁。
+	nospectre_v2：禁用对Spectre Variant 2漏洞的软件补丁。
+	nospectre_v1：禁用对Spectre Variant 1漏洞的软件补丁。
+	l1tf=off：禁用对L1 Terminal Fault漏洞（L1TF）的软件补丁。
+	nospec_store_bypass_disable：禁用对Speculative Store Bypass漏洞的软件补丁。
+	no_stf_barrier：禁用Speculative Store Bypass（SSB）屏障。
+	mds=off：禁用对Microarchitectural Data Sampling漏洞（MDS）的软件补丁。
+	mitigations=off：禁用所有的软件漏洞缓解措施。
+
+2. 硬件控制
+	intel_idle.max_cstate=0：将Intel处理器的C状态限制为最低级别，以防止处理器进入低功耗状态。
+	idle=poll：使用轮询方式来处理CPU空闲，而不是使用默认的节能模式。
+	intel_pstate=disable：禁用Intel P-state调节器，用于控制处理器频率和电压的功能。
+	pcie_aspm=performance：将PCIe设备的Active State Power Management（ASPM）设置为性能模式。
+
+3. 内核相关
+	- nmi_watchdog=0：禁用NMI Watchdog，该功能用于检测处理器或系统的异常情况。
+	- audit=0：禁用系统的审计功能。
+	- irqaffinity=0：禁用中断亲和性，即不将中断与特定CPU核心关联。
+	- skew_tick=1：在Linux上，时钟定时器默认在所有cpu上同时触发。这可能会导致锁竞争，因为有些锁是由时钟处理程序获取的，如jiffies_lock和RCU锁。
+		skew_tick=1参数使内核对每个CPU的时钟定时器进行编程，使其在不同的时间触发，从而避免可能的锁争用。在工作负载对jittier非常敏感时，内核开发者建议将skew_tick=1传递给内核。
+	- nosoftlockup：禁用软件锁死检测器，以防止系统因软件进程长时间占用CPU而导致的锁死情况。
+	- nohz=on：在传统的Linux内核中，硬件定时器以规律的间隔触发中断，用于执行一些系统任务。但是，这些中断可能会对系统的负载均衡产生影响，导致处理器无法达到最佳性能。
+			通过启用nohz=on参数，系统将停用大多数处理器上的硬件定时器中断，从而减少对负载均衡的干扰。
+	- nohz_full=cpulist：当nohz=on启用时，系统仍然需要有一些处理器负责处理硬件定时器中断，以确保系统的正常运行。
+			使用nohz_full=cpulist参数，可以指定一个处理器列表，这些处理器将完全启用无硬件定时器负载均衡，并负责处理硬件定时器中断。
+	- isolated_cores：该参数用于将特定的 CPU 核心从系统中隔离出来，使其不参与普通进程的调度。隔离 CPU 核心可以将其专门分配给特定的任务、实时应用程序或进行系统调优。
+
+
+系统参数：
+	- 设置网络低延迟模式：tuned-adm profile network-latency 
+	- 关闭中断中断平衡： systemd stop irqbalance
+	- 关闭防火墙，iptable，selinux
+	- 透明内存大页，视业务情况开启/关闭
+
+网卡调优：根据不同网卡类型有不同的调优手段，包括中断绑定、队列数增加、队列增大及不同厂商的透明加速及更细粒度的参数调整
+
+进程：绑核，充分利用L3，提前分配内存。
+
+
