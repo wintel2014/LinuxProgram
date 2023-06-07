@@ -13,9 +13,9 @@ argsFunc(1, 2, 3, 4)
 #(2, 3, 4)
 
 def kw_args_func(**kwargs):
-    print (kwargs)
+    print (kwargs) 
 
-kw_args_func(x=1,y=2,z=3)
+kw_args_func(x=1,y=2,z=3) #{'x': 1, 'y': 2, 'z': 3}
 
 def kw_args_connect(**kwargs):
     print (kwargs["user"])

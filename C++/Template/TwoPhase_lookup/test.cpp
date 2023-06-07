@@ -1,25 +1,36 @@
 #include <stdio.h>
 
+#define DEFINE_GLOBAL_FUNCTION 1
 #if DEFINE_GLOBAL_FUNCTION
 void show()
 {
-    printf("anonymous::show\n");
+    printf("anonymous::show %d\n", __LINE__);
 }
 #endif
 
+template<typename T>
+class C {
+public:
+    typename T::type m_data;
+    C() : m_data(T::value){
+        T t;
+        t.template call<3>();
+    }
+    
+};
 template<typename T>
 class A
 {
 public:
     void show()
     {
-        printf("A::show\n");
+        printf("A::show %d\n", __LINE__);
     }
 };
 
 void sum(int)
 {
-    printf("%s\n", __PRETTY_FUNCTION__);
+    printf("%s %d\n", __PRETTY_FUNCTION__, __LINE__);
 }
 
 template<typename T>
@@ -38,7 +49,7 @@ public:
 
 void sum(float)
 {
-    printf("%s\n", __PRETTY_FUNCTION__);
+    printf("%s %d\n", __PRETTY_FUNCTION__, __LINE__);
 }
 
 int main()

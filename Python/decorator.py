@@ -86,14 +86,14 @@ class Spam:
     attr = "Test"
     @timethis
     def instance_method(self, n):
-        print(self, n)
+        print("instance_method: ", self, n)
         while n > 0:
             n -= 1
 
     @classmethod
     @timethis
     def class_method(cls, n):
-        print(cls, n, cls.attr)
+        print("class_method: ", cls, n, cls.attr)
         while n > 0:
             n -= 1
 
@@ -107,6 +107,7 @@ class Spam:
 print("\n\n")
 s = Spam()
 s.instance_method(1000000)
+s.class_method(10000)
 Spam.class_method(1000000)
 Spam.static_method(1000000)
 
@@ -136,3 +137,17 @@ class Circle(object):
 c = Circle(1)
 a = c.diameter
 c.diameter = a+1
+
+
+def my_decorator(cls, **kwargs):
+    # Modify or extend class behavior
+    setattr(cls, 'newattr', 'Dynamically set in decorator')
+    return cls
+
+@my_decorator
+class MyClass:
+    # Class definition
+    pass
+
+c = MyClass()
+print(c.newattr)

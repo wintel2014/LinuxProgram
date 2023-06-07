@@ -1,9 +1,14 @@
 #include <iostream>
-
+#include <vector>
 using namespace std;
 
 
-
+struct Base
+{
+    Base(int i) : m_value(i) {}
+    ~Base() { cout<<__PRETTY_FUNCTION__<<":"<<m_value<<"\n";}
+    int m_value;
+};
 class Base1
 {
 public:
@@ -61,13 +66,16 @@ Derive::Derive()
 class Derive: public Base1, virtual public Base2, public Base3, virtual public Base4
 {
 public:
-    Derive(): M3(1) {cout<<__PRETTY_FUNCTION__<<"\n";}
-    Base5 M1;
-    Base6 M2;
-    Base7 M3;
+    Derive(): M6(1) {cout<<__PRETTY_FUNCTION__<<"\n";}
+    Base5 M5;
+    Base6 M6;
+    Base7 M7;
 };
 
 int main()
 {
     Derive Obj;
+    std::vector<Base> destruct_order{1,2,3,4};
+    std::cout<<"Quit main\n";
+
 }
