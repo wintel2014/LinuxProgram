@@ -9,8 +9,8 @@ BOOST_PYTHON_MODULE(test_class)
         .def(init<int>())                               //其他构造函数
         .def("get", &A::get)                            //成员函数
         .def("set", &A::set)                            //成员函数
-        .def_readwrite("publicVal", &A::publicVal)      //数据成员，当然是公共的
-    ;   
-    def("printA", &printA);
+        .def_readwrite("publicVal", &A::publicVal);     //数据成员，当然是公共的
+
+    def("printA_fun", &printA);
     def("addA", &addA);
 }
